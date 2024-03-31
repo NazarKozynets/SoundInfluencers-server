@@ -1,0 +1,6 @@
+buildCommand: npm install && npm run build
+startCommand: node server.js
+
+env:
+  - name: NODE_VERSION
+    value: 16
