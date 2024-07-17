@@ -177,6 +177,7 @@ export class PromosService {
         offers: offersWithAvatars,
       };
     } catch (err) {
+      
       return {
         code: 500,
         message: err,

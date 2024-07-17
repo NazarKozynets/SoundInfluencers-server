@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-interface typesInstagram {
+interface ISocial {
   musicStyle: string;
   musicStyleOther: string;
   instagramUsername: string;
@@ -10,7 +10,7 @@ interface typesInstagram {
   price: string;
 }
 
-const typesInstagramApi = {
+const typesSocialMedia = {
   musicStyle: { type: 'string' },
   musicStyleOther: { type: 'string' },
   instagramUsername: { type: 'string' },
@@ -26,9 +26,14 @@ export class CreateInfluencerDto {
 
   @ApiProperty({
     type: 'array',
-    items: { type: 'object', properties: typesInstagramApi },
+    items: { type: 'object', properties: typesSocialMedia },
   })
-  instagram: typesInstagram[];
+  tiktok: ISocial[];
+  soundcloud: ISocial[];
+  facebook: ISocial[];
+  instagram: ISocial[];
+  spotify: ISocial[];
+  press: ISocial[];
 
   @ApiProperty()
   email: string;

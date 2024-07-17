@@ -260,6 +260,7 @@ export class AuthService {
         influencerId: newUser._id,
         verifyId: generateVerifyId,
       });
+      // TODO: add another social medias
       await sendMail(
         'admin@soundinfluencers.com',
         'soundinfluencers',

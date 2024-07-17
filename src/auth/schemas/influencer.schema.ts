@@ -33,6 +33,16 @@ export class Influencer {
 
   @Prop({ type: [typesInstagramApi] })
   instagram: typesInstagram[];
+  @Prop({ type: [typesInstagramApi] })
+  tiktok: typesInstagram[];
+  @Prop({ type: [typesInstagramApi] })
+  spotify: typesInstagram[];
+  @Prop({ type: [typesInstagramApi] })
+  press: typesInstagram[];
+  @Prop({ type: [typesInstagramApi] })
+  soundcloud: typesInstagram[];
+  @Prop({ type: [typesInstagramApi] })
+  facebook: typesInstagram[];
 
   @Prop()
   followersNumber: string;

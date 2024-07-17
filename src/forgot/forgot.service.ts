@@ -110,8 +110,11 @@ export class ForgotService {
           const checkForgot = await this.forgotModel.findOne({
             id: checkUserInfluencer.id,
           });
+          const code = generateFourDigitCode();
+          console.log('====================================');
+          console.log(code);
+          console.log('====================================');
           if (checkForgot) {
-            const code = generateFourDigitCode();
             await this.forgotModel.findOneAndUpdate(
               { id: checkUserInfluencer.id },
               {
@@ -135,7 +138,6 @@ export class ForgotService {
               message: 'code send',
             };
           } else {
-            const code = generateFourDigitCode();
             await this.forgotModel.create({
               id: checkUserInfluencer.id,
               code: code,
@@ -254,7 +256,7 @@ export class ForgotService {
                <p>SoundInfluencers team</p>`,
               'html',
             );
-            await this.clientModel.findOneAndUpdate(
+            await this.influencerModel.findOneAndUpdate(
               { _id: checkUserInfluencer._id },
               {
                 password: bcrypt.hashSync(newPassword),
