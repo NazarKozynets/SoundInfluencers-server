@@ -5,7 +5,8 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: ['http://localhost:3001', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные домены
+    // origin: ['http://localhost:3001', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные домены
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://api.soundinfluencers.com ' ,'https://nazar.soundinfluencers.com' ,'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные д>
     methods: 'GET,PUT,POST,DELETE', // Разрешенные HTTP методы
     allowedHeaders: 'Content-Type, Authorization', // Разрешенные заголовки
   });
@@ -17,6 +18,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  await app.listen(3000);
+  // SwaggerModule.setup('api-nazar', app, document);
+  await app.listen(3001);
 }
 bootstrap();
