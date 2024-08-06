@@ -7,13 +7,13 @@ import mongoose from 'mongoose';
 import { Influencer } from './schemas/influencer.schema';
 import { LoginClientDto } from './dto/login-client.dto';
 import { VerifyDto } from './dto/verify.dto';
-import sendMail from 'src/utils/sendMail';
+import sendMail from "../utils/sendMail";  
 import { VerifyInfluencer } from './schemas/verifyInfluencer.schema';
 import { VerifyClient } from './schemas/verifyClient.schema';
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-function generateRandomString() {
+export function generateRandomString() {
   const characters =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let randomString = '';

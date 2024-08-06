@@ -12,6 +12,7 @@ import { UpdatePersonalInfluencerDto } from './dto/update-personal-influencer.dt
 import { UpdateMusicStyleInfluencerDto } from './dto/update-music-influencer.dto';
 import { UpdateEmailInfluencerDto } from './dto/update-email-influencer.dto';
 import { UpdatePhoneInfluencerDto } from './dto/update-phone-influencer.dto';
+import { UpdateCountriesInfluencersDto } from './dto/update-countries-influencers.dto';
 import sendMail from 'src/utils/sendMail';
 const bcrypt = require('bcryptjs');
 
@@ -332,7 +333,7 @@ export class ProfileService {
       };
     }
   }
-
+  
   async updatePasswordClient(data: UpdatePasswordClientDto) {
     try {
       if (!data) {

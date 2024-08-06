@@ -1,27 +1,37 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 interface typesInstagram {
   musicStyle: string;
+  musicSubStyles: string[];
   instagramUsername: string;
-  instagramLink: string,
+  instagramLink: string;
   followersNumber: string;
   logo: string;
   price: string;
+  countries: { country: string; percentage: number }[];
 }
 
 const typesInstagramApi = {
   musicStyle: String,
+  musicSubStyles: [String],
   instagramUsername: String,
   instagramLink: String,
   followersNumber: String,
   logo: String,
   price: String,
+  countries: [
+    {
+      country: String,
+      percentage: Number,
+    },
+  ],
 };
 
 @Schema({
   timestamps: true,
 })
-export class Influencer {
+export class Influencer extends Document {
   @Prop({ default: 'influencer' })
   role: string;
 
@@ -33,14 +43,19 @@ export class Influencer {
 
   @Prop({ type: [typesInstagramApi] })
   instagram: typesInstagram[];
+
   @Prop({ type: [typesInstagramApi] })
   tiktok: typesInstagram[];
+
   @Prop({ type: [typesInstagramApi] })
   spotify: typesInstagram[];
+
   @Prop({ type: [typesInstagramApi] })
   press: typesInstagram[];
+
   @Prop({ type: [typesInstagramApi] })
   soundcloud: typesInstagram[];
+
   @Prop({ type: [typesInstagramApi] })
   facebook: typesInstagram[];
 

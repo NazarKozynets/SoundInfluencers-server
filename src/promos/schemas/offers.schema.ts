@@ -12,7 +12,7 @@ export class Offers {
 
   @Prop()
   maxInfluencer: number;
-
+  
   @Prop()
   connectInfluencer: [];
 
