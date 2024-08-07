@@ -14,7 +14,6 @@ import { CreateInfluencerDto } from './dto/create-influencer.dto';
 import { LoginClientDto } from './dto/login-client.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { ApiProperty, ApiQuery } from '@nestjs/swagger';
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -72,4 +71,9 @@ export class AuthController {
   getInfluencers() {
     return this.authService.getInfluencers();
   }
+  
+  @Get('influencer/:id')
+    getInfluencer(@Param('id') id: string) {
+        return this.authService.getInfluencerById(id);
+    }
 }
