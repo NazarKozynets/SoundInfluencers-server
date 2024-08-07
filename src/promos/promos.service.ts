@@ -148,28 +148,40 @@ export class PromosService {
     try {
       const offers = await this.offersModel.find({});
 
-      // Iterate over the offers
       const offersWithAvatars = await Promise.all(
-        offers.map(async (offer: any) => {
-          // Iterate over the connectInfluencer array in each offer
-          const connectInfluencerWithAvatars = await Promise.all(
-            offer.connectInfluencer.map(async (influencer: any) => {
-              const avatar = await this.getInfluencerAvatarById(
-                influencer.influencerId,
-                influencer.instagramUsername
-              );
-              return {
-                ...influencer, // Spread the existing influencer properties
-                avatar: avatar, // Add the avatar to the influencer
-              };
-            })
-          );
+          offers.map(async (offer: any) => {
+            if (!Array.isArray(offer.connectInfluencer)) {
+              return offer;
+            }
 
-          return {
-            ...offer?._doc, // Assuming offer is a Mongoose document, spread its properties
-            connectInfluencer: connectInfluencerWithAvatars, // Replace connectInfluencer array with the new one
-          };
-        })
+            const connectInfluencerWithAvatars = await Promise.all(
+                offer.connectInfluencer.map(async (influencer: any) => {
+                  if (!influencer.influencerId || !influencer.instagramUsername) {
+                    return influencer;
+                  }
+
+                  try {
+                    const avatar = await this.getInfluencerAvatarById(
+                        influencer.influencerId,
+                        influencer.instagramUsername
+                    );
+
+                    return {
+                      ...influencer,
+                      avatar: avatar,
+                    };
+                  } catch (error) {
+                    console.error(`Error fetching avatar for influencer ${influencer.influencerId}:`, error);
+                    return influencer;
+                  }
+                })
+            );
+
+            return {
+              ...offer?._doc, 
+              connectInfluencer: connectInfluencerWithAvatars, 
+            };
+          })
       );
 
       return {
@@ -177,13 +189,15 @@ export class PromosService {
         offers: offersWithAvatars,
       };
     } catch (err) {
-      
+      console.error('Error fetching offers:', err);
+
       return {
         code: 500,
         message: err,
       };
     }
   }
+
 
   // Method to get influencer avatar by ID
   async getInfluencerAvatarById(influencerId: string, instagramName: string) {
