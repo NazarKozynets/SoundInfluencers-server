@@ -198,8 +198,6 @@ export class PromosService {
     }
   }
 
-
-  // Method to get influencer avatar by ID
   async getInfluencerAvatarById(influencerId: string, instagramName: string) {
     const influencer = await this.influencerModel.findById(influencerId);
     const avatar = influencer.instagram.find(
