@@ -238,10 +238,10 @@ export class AuthService {
             }
 
             const checkInstagram = data.instagram.map((item) => {
-                if (item.musicStyle === 'Other') {
+                if (item.musicStyle === 'Other' && item.musicStyleOther) {
                     return {
                         ...item,
-                        musicStyle: item.musicStyleOther,
+                        musicStyle: item.musicStyleOther[0],
                     };
                 } else {
                     return {

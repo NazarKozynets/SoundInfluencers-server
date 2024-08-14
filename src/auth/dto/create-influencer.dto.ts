@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 interface ISocial {
   musicStyle: string;
-  musicSubStyles: string[];
-  musicStyleOther: string;
+  musicSubStyles: string[] | null;
+  musicStyleOther: string[] | null;
   instagramUsername: string;
   instagramLink: string;
   followersNumber: string;
@@ -14,8 +14,8 @@ interface ISocial {
 
 const typesSocialMedia = {
   musicStyle: { type: 'string' },
-  musicSubStyles: { type: 'array', items: { type: 'string' } },
-  musicStyleOther: { type: 'string' },
+  musicSubStyles: { type: 'array', items: { type: 'string' }, nullable: true },
+  musicStyleOther: { type: 'array', items: { type: 'string' }, nullable: true },
   instagramUsername: { type: 'string' },
   instagramLink: { type: 'string' },
   followersNumber: { type: 'string' },
