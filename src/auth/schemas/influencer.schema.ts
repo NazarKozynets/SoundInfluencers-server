@@ -10,7 +10,8 @@ interface typesInstagram {
     followersNumber: string;
     logo: string;
     price: string;
-    countries: { country: string; percentage: number }[];
+    countries: { country: string; percentage: number }[] | null;
+    categories: string[] | null;
 }
 
 const typesInstagramApi = {
@@ -27,7 +28,8 @@ const typesInstagramApi = {
             country: String,
             percentage: Number,
         },
-    ],
+    ] || null,
+    categories: [String] || null,
 };
 
 @Schema({
