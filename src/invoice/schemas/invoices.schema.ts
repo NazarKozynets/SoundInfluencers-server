@@ -87,6 +87,9 @@ export class Invoices {
 
   @Prop({ default: '' })
   fileUrl: string;
+
+  @Prop()
+  selectedPaymentMethod: string;
 }
 
 export const InvoicesSchema = SchemaFactory.createForClass(Invoices);

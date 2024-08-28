@@ -179,12 +179,18 @@ export class InvoiceService {
         await this.saveInvoiceDataModel.create(data);
       }
 
+      const instagramLinks = checkUser.instagram
+          .map(
+              (ig) => `<a href="${ig.instagramLink}" target="_blank">${ig.instagramUsername}</a>`
+          )
+          .join(", ");
+      
       await this.createPDF(result, data)
         .then(async (pdfPath) => {
           await sendMail(
             "admin@soundinfluencers.com",
-            "soundinfluencers",
-            `Invoice from ${data.contactEmail} ID: ${result?._id}`,
+            `${checkUser.email}`,
+            `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramLinks} Selected Payment Method: ${data.selectedPaymentMethod}`,
             "pdf",
             pdfPath as string
           );

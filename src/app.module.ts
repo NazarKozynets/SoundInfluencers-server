@@ -16,7 +16,8 @@ import { PaymentModule } from './payment/payment.module';
 @Module({
   imports: [
     MongooseModule.forRoot(
-        'mongodb+srv://test:b1fA5EG9SNuA0M35@cluster0.svrxsep.mongodb.net/music',
+        // 'mongodb+srv://test:b1fA5EG9SNuA0M35@cluster0.svrxsep.mongodb.net/music',
+        'mongodb+srv://test_education:EricNatasha1@cluster0.svrxsep.mongodb.net/music_dev'
     ),
     AuthModule,
     ForgotModule,

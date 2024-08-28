@@ -72,4 +72,7 @@ export class CreateInvoiceDtoDto {
 
   @ApiProperty({ required: true })
   description: string;
+
+  @ApiProperty({ required: true })
+  selectedPaymentMethod: string;
 }
