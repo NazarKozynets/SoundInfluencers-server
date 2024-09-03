@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { PromosService } from './promos.service';
 import { CreatePromosDto } from './dto/create-promo.dto';
+import { CreatePromosEstimateDto } from "./dto/create-promo-estimate.dto";
 import { ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import File from 'multer'; // Correct import of File type
@@ -25,6 +26,11 @@ export class PromosController {
   @Post()
   createPromos(@Body() data: CreatePromosDto) {
     return this.promosService.createPromos(data);
+  }
+
+  @Post('estimate')
+  createPromosForEstimate(@Body() data: CreatePromosEstimateDto) {
+    return this.promosService.createPromosForEstimate(data);
   }
 
   @ApiQuery({ name: 'promoId', required: true })
