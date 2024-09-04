@@ -342,7 +342,7 @@ export class PromosService {
             const promos = await this.promosModel
                 .find({
                     userId: id,
-                    statusPromo: {$in: ["work", "wait"]},
+                    statusPromo: {$in: ["work", "wait", "estimate"]},
                 })
                 .lean();
 
