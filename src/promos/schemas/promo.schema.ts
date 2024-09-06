@@ -27,6 +27,12 @@ export class SelectInfluencers {
 
   @Prop()
   confirmation: string;
+  
+  @Prop()
+  selectedVideo: string;
+  
+  @Prop()
+  dateRequest: string;
 
   @Prop({ default: 'wait' })
   closePromo: string;
@@ -83,23 +89,19 @@ export class Promos {
   })
   selectInfluencers: SelectInfluencers[];
 
-  @Prop()
-  videoLink: string;
+  @Prop({
+    type: [{ videoLink: String, postDescription: String, storyTag: String, swipeUpLink: String, specialWishes: String }],
+  })
+  videos: Array<{
+    videoLink: string;
+    postDescription: string;
+    storyTag: string;
+    swipeUpLink: string;
+    specialWishes: string;
+  }>; 
 
   @Prop()
-  postDescription: string;
-
-  @Prop()
-  storyTag: string;
-
-  @Prop()
-  swipeUpLink: string;
-
-  @Prop()
-  dateRequest: string;
-
-  @Prop()
-  specialWishes: string;
+  campaignName: string; 
 
   @Prop({ required: true, default: 'payment' })
   paymentType: string;
@@ -108,7 +110,7 @@ export class Promos {
   paymentStatus: string;
 
   @Prop({ required: true })
-  statusPromo: string;
+  amount: number;
 
   @Prop({ default: 'wait' })
   verifyPromo: string;

@@ -15,6 +15,17 @@ interface selectInfluencersType {
   reach: string;
   like: string;
   invoice: string;
+  selectedVideo: string;
+  dateRequest: string;
+}
+
+
+interface VideoType {
+  videoLink: string;
+  postDescription: string;
+  storyTag: string;
+  swipeUpLink: string;
+  specialWishes: string;
 }
 
 export class CreatePromosDto {
@@ -33,6 +44,7 @@ export class CreatePromosDto {
     variant: number;
     price: number;
   };
+
   @ApiProperty({
     required: true,
     type: 'array',
@@ -42,25 +54,19 @@ export class CreatePromosDto {
   })
   selectInfluencers: selectInfluencersType[];
 
-  @ApiProperty({ required: true })
-  videoLink: string;
+  @ApiProperty({
+    required: true,
+    type: 'array',
+    items: {
+      type: 'object',
+    },
+  })
+  videos: VideoType[]; 
 
   @ApiProperty({ required: true })
-  postDescription: string;
+  campaignName: string; 
 
   @ApiProperty({ required: true })
-  storyTag: string;
-
-  @ApiProperty({ required: true })
-  swipeUpLink: string;
-
-  @ApiProperty({ required: true })
-  dateRequest: string;
-
-  @ApiProperty({ required: true })
-  specialWishes: string;
-
-  @ApiProperty({ required: true, default: 'payment' })
   paymentType: string;
 
   @ApiProperty({ required: true, default: 'wait' })
@@ -68,4 +74,7 @@ export class CreatePromosDto {
 
   @ApiProperty({ required: true })
   amount: number;
+
+  @ApiProperty({ required: true })
+  createdAt: string; 
 }
