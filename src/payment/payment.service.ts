@@ -124,7 +124,12 @@ export class PaymentService {
     if (result.vatNumber) {
       doc.text("VAT: " + result.vatNumber, 250, 285);
     }
-
+    
+    // PO Number
+    if (result.poNumber) {
+      doc.text(`PO NUMBER: ${result.poNumber}`, 50, 300);
+    }
+    
     // Table headers
     doc.text("DESCRIPTION", 50, 350);
     // doc.text('QTY', 200, 300);
@@ -220,20 +225,21 @@ export class PaymentService {
       };
     }
   }
-  
+
 
   async createOrderTransfer(data: CreateOrderTransfer) {
     if (
-      !data.amount ||
-      typeof data.amount !== `number` ||
-      !data.nameProduct ||
-      !data.userId
+        !data.amount ||
+        typeof data.amount !== `number` ||
+        !data.nameProduct ||
+        !data.userId
     ) {
       return {
         code: 400,
         message: "Not enough arguments",
       };
     }
+    console.log(data, "data")
     const createId = generateId();
 
     try {
@@ -251,33 +257,36 @@ export class PaymentService {
       const result = {
         _id: createId,
         beneficiary:
-          invoiceDetail[0]?.firstName + " " + invoiceDetail[0]?.lastName ||
-          clientDetail.firstName,
+            invoiceDetail[0]?.firstName + " " + invoiceDetail[0]?.lastName ||
+            clientDetail.firstName,
         street: invoiceDetail[0]?.address || "",
         country: invoiceDetail[0]?.country || "",
         company: invoiceDetail[0]?.company || "",
         vatNumber: invoiceDetail[0]?.vatNumber || "",
         countryPay: data.country || "",
         amount: data.amount,
+        poNumber: data.poNumber || "",
       };
 
       await this.createPDF(result, data)
-        .then(async (pdfPath) => {
-          await sendMail(
-            clientDetail.email,
-            "Invoice",
-            `<p>Hello,</p>
-            <p>Please find attached the invoice for your SoundInfluencers campaign.</p><br/>
-            <p> To monitor the progress of your campaign, please visit the <a href="https://go.soundinfluencers.com/account/client/ongoing-promos">"Ongoing Promo"</a>  section in the homepage in <a href="https://go.soundinfluencers.com">go.soundinfluencers.com</a></p><br/>
-            <p>Best regards,
-            SoundInfluencers Team</p>`,
-            "pdf",
-            pdfPath as string
-          );
-        })
-        .catch((error) => {
-          console.error("Error creating PDF:", error);
-        });
+          .then(async (pdfPath) => {
+            const emailToSend = data.emailForSendingInvoice || clientDetail.email;
+
+            await sendMail(
+                emailToSend,  
+                "Invoice",
+                `<p>Hello,</p>
+          <p>Please find attached the invoice for your SoundInfluencers campaign.</p><br/>
+          <p> To monitor the progress of your campaign, please visit the <a href="https://go.soundinfluencers.com/account/client/ongoing-promos">"Ongoing Promo"</a>  section in the homepage in <a href="https://go.soundinfluencers.com">go.soundinfluencers.com</a></p><br/>
+          <p>Best regards,
+          SoundInfluencers Team</p>`,
+                "pdf",
+                pdfPath as string
+            );
+          })
+          .catch((error) => {
+            console.error("Error creating PDF:", error);
+          });
 
       return {
         code: 201,

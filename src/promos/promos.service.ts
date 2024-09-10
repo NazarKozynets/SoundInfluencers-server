@@ -49,6 +49,7 @@ export class PromosService {
                 selectInfluencers: processedInfluencers,
                 paymentType: !data.paymentType ? "payment" : data.paymentType,
                 paymentStatus: "wait",
+                statusPromo: "wait",
                 verifyPromo: "wait",
             });
 
@@ -73,6 +74,7 @@ export class PromosService {
             const influencerFilter = influencerList.filter((item) => item);
 
             await sendMail(
+                // "nazarkozynets030606@zohomail.eu",
                 "admin@soundinfluencers.com",
                 "soundinfluencers",
                 `<p>Hi,</p>
@@ -175,6 +177,48 @@ export class PromosService {
                 code: 500,
                 message: err,
             };
+        }
+    }
+
+    async updateEstimatePromo(promoId: string, isPoNeed: boolean) {
+        try {
+            const findPromo = await this.promosModel.findOne({ _id: promoId }).lean().exec();
+
+            if (!findPromo) {
+                return { status: 404, message: 'Promo not found' };
+            }
+
+            let newStatus: string | null = null;
+            let updateFields: any = { statusPromo: 'estimate', verifyPromo: 'wait'};
+
+            if (isPoNeed) {
+                if (findPromo.statusPromo === 'estimate') {
+                    newStatus = 'po waiting';
+                } else if (findPromo.statusPromo === 'po waiting') {
+                    newStatus = 'wait';
+                }
+            } else {
+                if (findPromo.statusPromo === 'estimate') {
+                    newStatus = 'wait';
+                }
+            }
+
+            if (newStatus) {
+                updateFields.statusPromo = newStatus;
+
+                if (newStatus === 'wait') {
+                    updateFields.verifyPromo = 'accept';
+                }
+                
+                await this.promosModel.findOneAndUpdate(
+                    { _id: promoId },
+                    updateFields
+                );
+            }
+
+            return { status: 200, message: 'Promo status updated successfully' };
+        } catch (err) {
+            return { status: 500, message: err.message };
         }
     }
 
@@ -348,10 +392,10 @@ export class PromosService {
             const promos = await this.promosModel
                 .find({
                     userId: id,
-                    statusPromo: {$in: ["work", "wait", "estimate"]},
+                    statusPromo: {$in: ["work", "wait", "estimate", "po waiting"]},
                 })
                 .lean();
-
+            
             const promosName = await Promise.all(
                 promos.map(async (item) => {
                     const clientName = await this.clientModel.findById(item.userId);
@@ -363,7 +407,7 @@ export class PromosService {
                     };
                 })
             );
-
+            
             return {
                 code: 200,
                 promos: promosName,
@@ -677,7 +721,7 @@ export class PromosService {
                 };
             }
 
-            if (findNewPromo.verifyPromo === "wait" && promoResponse === "accept") {
+            if (findNewPromo.statusPromo === "wait" && promoResponse === "accept") {
                 const updateNewPromo = await this.promosModel.findOneAndUpdate(
                     {
                         _id: promoId,
@@ -690,7 +734,7 @@ export class PromosService {
                     },
                     {
                         $set: {
-                            verifyPromo: "work", 
+                            statusPromo: "work", 
                             "selectInfluencers.$.confirmation": promoResponse, 
                         },
                     },
@@ -701,6 +745,7 @@ export class PromosService {
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
+                    // "nazarkozynets030606@zohomail.eu",
                     "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} accepted the offer for ${checkUserClient.email}'s campaign</p>
@@ -740,6 +785,7 @@ export class PromosService {
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
+                    // "nazarkozynets030606@zohomail.eu",
                     "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} declined the offer for ${checkUserClient.email}'s campaign</p>
@@ -934,13 +980,12 @@ export class PromosService {
             };
         }
     }
-
-
+    
     async updateOngoingPromo(
         influencerId: string,
         instagramUsername: string,
         promoId: string,
-        data: any
+        data: any,
     ) {
         if (!influencerId || !promoId || !instagramUsername) {
             return {
@@ -969,7 +1014,7 @@ export class PromosService {
                     message: "not found",
                 };
             }
-
+            
             const dataInstagram = findNewPromo.selectInfluencers.find(
                 (item) =>
                     item.instagramUsername === instagramUsername &&

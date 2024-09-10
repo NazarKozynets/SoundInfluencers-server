@@ -34,6 +34,16 @@ export class PromosController {
   }
 
   @ApiQuery({ name: 'promoId', required: true })
+  @ApiQuery({ name: 'isPoNeed', required: true, type: Boolean })
+  @Put('update-estimate')
+  async updateEstimatePromo(
+      @Query('promoId') promoId: string,
+      @Query('isPoNeed') isPoNeed: boolean
+  ) {
+    return this.promosService.updateEstimatePromo(promoId, isPoNeed);
+  }
+
+  @ApiQuery({ name: 'promoId', required: true })
   @ApiQuery({ name: 'status', required: true })
   @Get('verify-promo')
   verifyPromo(@Query() args: { promoId: string; status: string }) {

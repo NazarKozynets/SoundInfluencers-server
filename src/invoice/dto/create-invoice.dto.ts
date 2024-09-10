@@ -75,4 +75,7 @@ export class CreateInvoiceDtoDto {
 
   @ApiProperty({ required: true })
   selectedPaymentMethod: string;
+
+  @ApiProperty({ required: false })
+  poNumber?: string;
 }

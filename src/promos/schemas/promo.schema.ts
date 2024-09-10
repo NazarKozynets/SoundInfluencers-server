@@ -110,6 +110,9 @@ export class Promos {
   paymentStatus: string;
 
   @Prop({ required: true })
+  statusPromo: string;
+  
+  @Prop({ required: true })
   amount: number;
 
   @Prop({ default: 'wait' })

@@ -29,4 +29,10 @@ export class CreateOrderTransfer {
 
   @ApiProperty({ default: 'stripe' })
   paymentMethod: string;
+
+  @ApiProperty({ required: false, description: 'Email for sending the invoice, if specified' })
+  emailForSendingInvoice?: string;
+
+  @ApiProperty({ required: false, description: 'po number' })
+  poNumber?: string;
 }
