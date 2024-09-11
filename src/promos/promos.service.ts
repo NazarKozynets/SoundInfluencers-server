@@ -32,7 +32,7 @@ export class PromosService {
                     message: "Not enough arguments",
                 };
             }
-
+console.log('a')
             const processedInfluencers = data.selectInfluencers.map((influencer) => {
                 const selectedVideo = influencer.selectedVideo;                
                 const dateRequest = influencer.dateRequest;
