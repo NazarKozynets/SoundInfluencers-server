@@ -14,6 +14,16 @@ interface selectInfluencersType {
     reach: string;
     like: string;
     invoice: string;
+    selectedVideo: string;
+    dateRequest: string;
+}
+
+interface VideoType {
+    videoLink: string;
+    postDescription: string;
+    storyTag: string;
+    swipeUpLink: string;
+    specialWishes: string;
 }
 
 export class CreatePromosEstimateDto {
@@ -47,4 +57,16 @@ export class CreatePromosEstimateDto {
         },
     })
     selectInfluencers: selectInfluencersType[];
+
+    @ApiProperty({
+        required: false,
+        type: 'array',
+        items: {
+            type: 'object',
+        },
+    })
+    videos: VideoType[];
+
+    @ApiProperty({ required: false })
+    amount: number;
 }

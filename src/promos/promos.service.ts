@@ -80,21 +80,23 @@ export class PromosService {
                 `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
 <p><strong>Post Details:</strong></p>
-<ul>
-    <li><strong>Promo ID:</strong> ${result._id}</li>
-    <li><strong>Video Links:</strong> ${data.videos.map(video => video.videoLink).join(', ')}</li>
-    <li><strong>Post Description:</strong> ${data.videos.map(video => video.postDescription).join(', ')}</li>
-    <li><strong>Story Tag:</strong> ${data.videos.map(video => video.storyTag).join(', ')}</li>
-    <li><strong>Swipe Up Link:</strong> ${data.videos.map(video => video.swipeUpLink).join(', ')}</li>
-    <li><strong>Special Wishes:</strong> ${data.videos.map(video => video.specialWishes).join(', ')}</li>
-</ul>
-<p><strong>Influencers Chosen:</strong></p>
+${data.videos.map((video, index) => `
+    <p><strong>Video ${index + 1}:</strong></p>
+    <ul>
+        <li><strong>Link:</strong> ${video.videoLink}</li>
+        <li><strong>Post Description:</strong> ${video.postDescription}</li>
+        <li><strong>Story Tag:</strong> ${video.storyTag}</li>
+        <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink}</li>
+        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
+    </ul>
+`).join('')}
+<p><strong>Selected Influencers:</strong></p>
 <ul>
     ${data.selectInfluencers.map(
                     (item) => `<li>Instagram name: ${item.instagramUsername}</li>`
                 ).join('')}
 </ul>
-<p>Payment Method Used: ${data.paymentType}</p>
+<p>Payment Method Used: ${result.paymentType}</p>
 <p>
     <a style="font-weight: 600" href="${process.env.SERVER}/promos/verify-promo?promoId=${result._id}&status=accept">
         Approve
@@ -119,7 +121,7 @@ export class PromosService {
         }
     }
 
-    async createPromosForEstimate(data: CreatePromosEstimateDto) {
+    async createPromosForEstimate(data: CreatePromosEstimateDto, isPO: boolean = false) {
         try {
             if (!data) {
                 return {
@@ -128,54 +130,122 @@ export class PromosService {
                 };
             }
 
-            const result = await this.promosModel.create({
-                ...data,
-                paymentType: !data.paymentType ? "payment" : data.paymentType,
-                paymentStatus: "wait",
-                statusPromo: "estimate",
-            });
+            if (!isPO) {
+                const result = await this.promosModel.create({
+                    ...data,
+                    paymentType: !data.paymentType ? "payment" : data.paymentType,
+                    paymentStatus: "wait",
+                    statusPromo: "estimate",
+                    isPO: false,
+                });
 
-            const dataClient = await this.clientModel.findOne({_id: data.userId});
+                const dataClient = await this.clientModel.findOne({ _id: data.userId });
 
-            const influencerList = await Promise.all(
-                data.selectInfluencers.map(async (item) => {
-                    const dataInfluencer = await this.influencerModel.findOne({
-                        _id: item.influencerId,
-                    });
+                const influencerList = await Promise.all(
+                    data.selectInfluencers.map(async (item) => {
+                        const dataInfluencer = await this.influencerModel.findOne({
+                            _id: item.influencerId,
+                        });
+                        return dataInfluencer ? dataInfluencer : null;
+                    })
+                );
+                const influencerFilter = influencerList.filter((item) => item);
 
-                    if (!dataInfluencer) return null;
-                    return dataInfluencer;
-                })
-            );
-            const influencerFilter = influencerList.filter((item) => item);
+                await sendMail(
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
+                    "soundinfluencers",
+                    `<p>Hi</p>
+                <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
+                <p>Influencers Chosen:</p><br/>
+                ${data.selectInfluencers
+                        .map((item) => `<p>Instagram name: ${item.instagramUsername}</p>`)
+                        .join('')}<br/>
+                <p>Email: ${dataClient.email}</p>
+                <p>Phone Number: ${dataClient.phone}</p>
+                `,
+                    "html"
+                );
 
-            await sendMail(
-                "admin@soundinfluencers.com",
-                "soundinfluencers",
-                `<p>Hi</p>
-      
-      <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
+                return {
+                    code: 201,
+                    result,
+                };
+            } else {
+                const processedInfluencers = data.selectInfluencers.map((influencer) => {
+                    const selectedVideo = influencer.selectedVideo;
+                    const dateRequest = influencer.dateRequest;
 
-      <p>Influencers Chosen:</p><br/>
-      ${data.selectInfluencers.map(
-                    (item, index) => `<p>Instagram name: ${item.instagramUsername}</p>`
-                ).join('')}<br/>
+                    return {
+                        ...influencer,
+                        selectedVideo,
+                        dateRequest,
+                    };
+                });
 
-      <p>Email: ${dataClient.email}</p>
-      <p>Phone Number: ${dataClient.phone}</p>
-      `,
-                "html"
-            );
+                const result = await this.promosModel.create({
+                    ...data,
+                    selectInfluencers: processedInfluencers,
+                    paymentType: !data.paymentType ? "payment" : data.paymentType,
+                    paymentStatus: "wait",
+                    statusPromo: "estimate",
+                    isPO: true, 
+                });
 
-            return {
-                code: 201,
-                result,
-            };
+                const dataClient = await this.clientModel.findOne({ _id: data.userId });
+                if (+dataClient.balance <= data.amount) {
+                    await this.clientModel.findOneAndUpdate(
+                        { _id: data.userId },
+                        { balance: "0" }
+                    );
+                }
+
+                const influencerList = await Promise.all(
+                    data.selectInfluencers.map(async (item) => {
+                        const dataInfluencer = await this.influencerModel.findOne({
+                            _id: item.influencerId,
+                        });
+                        return dataInfluencer ? dataInfluencer : null;
+                    })
+                );
+                const influencerFilter = influencerList.filter((item) => item);
+
+                await sendMail(
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
+                    "soundinfluencers",
+                    `<p>Hi,</p>
+<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
+<p><strong>Post Details:</strong></p>
+${data.videos.map((video, index) => `
+    <p><strong>Video ${index + 1}:</strong></p>
+    <ul>
+        <li><strong>Link:</strong> ${video.videoLink}</li>
+        <li><strong>Post Description:</strong> ${video.postDescription}</li>
+        <li><strong>Story Tag:</strong> ${video.storyTag}</li>
+        <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink}</li>
+        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
+    </ul>
+`).join('')}
+<p><strong>Selected Influencers:</strong></p>
+<ul>
+    ${data.selectInfluencers.map(
+                        (item) => `<li>Instagram name: ${item.instagramUsername}</li>`
+                    ).join('')}
+</ul>
+<p>Payment Method Used: ${result.paymentType}</p>`,
+                    "html"
+                );
+
+                return {
+                    code: 201,
+                    result,
+                };
+            }
         } catch (err) {
-            console.log(err);
             return {
                 code: 500,
-                message: err,
+                message: err.message,
             };
         }
     }
@@ -189,7 +259,7 @@ export class PromosService {
             }
 
             let newStatus: string | null = null;
-            let updateFields: any = { statusPromo: 'estimate', verifyPromo: 'wait'};
+            let updateFields: any = { statusPromo: 'estimate', verifyPromo: 'wait' };
 
             if (isPoNeed) {
                 if (findPromo.statusPromo === 'estimate') {
@@ -209,7 +279,7 @@ export class PromosService {
                 if (newStatus === 'wait') {
                     updateFields.verifyPromo = 'accept';
                 }
-                
+
                 await this.promosModel.findOneAndUpdate(
                     { _id: promoId },
                     updateFields
@@ -218,6 +288,7 @@ export class PromosService {
 
             return { status: 200, message: 'Promo status updated successfully' };
         } catch (err) {
+            console.error('Error updating promo status:', err);
             return { status: 500, message: err.message };
         }
     }
@@ -1042,7 +1113,7 @@ export class PromosService {
                             {
                                 balance: String(
                                     Number(checkInfluencer.balance) +
-                                    (+currentInstagram.price.replace(/[^\d]/g, "") / 2)
+                                    (+currentInstagram.price.replace(/[^\d]/g, ""))
                                 ),
                             }
                         );
@@ -1134,17 +1205,12 @@ export class PromosService {
                             (fin) => fin.instagramUsername === item.instagramUsername
                         );
 
-                        console.log(
-                            checkInfluencer.balance,
-                            currentInstagram.price.replace(/[^\d]/g, "")
-                        );
-
                         await this.influencerModel.findOneAndUpdate(
                             {_id: item.influencerId},
                             {
                                 balance: String(
                                     Number(checkInfluencer.balance) +
-                                    (+currentInstagram.price.replace(/[^\d]/g, "") / 2)
+                                    (+currentInstagram.price.replace(/[^\d]/g, ""))
                                 ),
                             }
                         );

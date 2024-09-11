@@ -28,10 +28,15 @@ export class PromosController {
     return this.promosService.createPromos(data);
   }
 
+  @ApiQuery({ name: 'isPO', required: false, type: Boolean }) 
   @Post('estimate')
-  createPromosForEstimate(@Body() data: CreatePromosEstimateDto) {
-    return this.promosService.createPromosForEstimate(data);
+  createPromosForEstimate(
+      @Body() data: CreatePromosEstimateDto,
+      @Query('isPO') isPO?: boolean 
+  ) {
+    return this.promosService.createPromosForEstimate(data, isPO);
   }
+
 
   @ApiQuery({ name: 'promoId', required: true })
   @ApiQuery({ name: 'isPoNeed', required: true, type: Boolean })
