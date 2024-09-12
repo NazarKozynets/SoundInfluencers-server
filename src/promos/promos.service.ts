@@ -32,11 +32,10 @@ export class PromosService {
                     message: "Not enough arguments",
                 };
             }
-console.log('a')
             const processedInfluencers = data.selectInfluencers.map((influencer) => {
-                const selectedVideo = influencer.selectedVideo;                
+                const selectedVideo = influencer.selectedVideo;
                 const dateRequest = influencer.dateRequest;
-                
+
                 return {
                     ...influencer,
                     selectedVideo,
@@ -53,11 +52,11 @@ console.log('a')
                 verifyPromo: "wait",
             });
 
-            const dataClient = await this.clientModel.findOne({ _id: data.userId });
+            const dataClient = await this.clientModel.findOne({_id: data.userId});
             if (+dataClient.balance <= data.amount) {
                 await this.clientModel.findOneAndUpdate(
-                    { _id: data.userId },
-                    { balance: "0" }
+                    {_id: data.userId},
+                    {balance: "0"}
                 );
             }
 
@@ -74,8 +73,8 @@ console.log('a')
             const influencerFilter = influencerList.filter((item) => item);
 
             await sendMail(
-                // "nazarkozynets030606@zohomail.eu",
-                "admin@soundinfluencers.com",
+                "nazarkozynets030606@zohomail.eu",
+                // "admin@soundinfluencers.com",
                 "soundinfluencers",
                 `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -139,7 +138,7 @@ ${data.videos.map((video, index) => `
                     isPO: false,
                 });
 
-                const dataClient = await this.clientModel.findOne({ _id: data.userId });
+                const dataClient = await this.clientModel.findOne({_id: data.userId});
 
                 const influencerList = await Promise.all(
                     data.selectInfluencers.map(async (item) => {
@@ -152,8 +151,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi</p>
                 <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
@@ -189,14 +188,14 @@ ${data.videos.map((video, index) => `
                     paymentType: !data.paymentType ? "payment" : data.paymentType,
                     paymentStatus: "wait",
                     statusPromo: "estimate",
-                    isPO: true, 
+                    isPO: true,
                 });
 
-                const dataClient = await this.clientModel.findOne({ _id: data.userId });
+                const dataClient = await this.clientModel.findOne({_id: data.userId});
                 if (+dataClient.balance <= data.amount) {
                     await this.clientModel.findOneAndUpdate(
-                        { _id: data.userId },
-                        { balance: "0" }
+                        {_id: data.userId},
+                        {balance: "0"}
                     );
                 }
 
@@ -211,8 +210,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -250,7 +249,7 @@ ${data.videos.map((video, index) => `
         }
     }
 
-    async updateEstimatePromo(promoId: string, isPoNeed: boolean) {
+    async updateEstimatePromo(promoId: string, isPoNeed: string) {
         try {
             const findPromo = await this.promosModel.findOne({ _id: promoId }).lean().exec();
 
@@ -258,40 +257,41 @@ ${data.videos.map((video, index) => `
                 return { status: 404, message: 'Promo not found' };
             }
 
-            let newStatus: string | null = null;
-            let updateFields: any = { statusPromo: 'estimate', verifyPromo: 'wait' };
+            let updateFields: any = { statusPromo: findPromo.statusPromo, verifyPromo: findPromo.verifyPromo };
 
-            if (isPoNeed) {
-                if (findPromo.statusPromo === 'estimate') {
-                    newStatus = 'po waiting';
-                } else if (findPromo.statusPromo === 'po waiting') {
-                    newStatus = 'wait';
-                }
-            } else {
-                if (findPromo.statusPromo === 'estimate') {
-                    newStatus = 'wait';
-                }
-            }
+            const isPoNeedBool = isPoNeed === 'true';
 
-            if (newStatus) {
-                updateFields.statusPromo = newStatus;
+            const paymentType = findPromo.paymentType.trim().toLowerCase();
+            const statusPromo = findPromo.statusPromo.trim().toLowerCase();
 
-                if (newStatus === 'wait') {
+            if (isPoNeedBool === true && paymentType === 'po request') {
+                if (statusPromo === 'po waiting') {
+                    updateFields.statusPromo = 'wait';
                     updateFields.verifyPromo = 'accept';
                 }
+            } else if (isPoNeedBool === false && paymentType === 'po request') {
+                if (statusPromo === 'estimate') {
+                    updateFields.statusPromo = 'po waiting';
+                }
+            } else if (statusPromo === 'estimate' && paymentType !== 'po request') {
+                updateFields.statusPromo = 'wait';
+                updateFields.verifyPromo = 'accept';
+            }
 
+            if (updateFields.statusPromo !== findPromo.statusPromo || updateFields.verifyPromo !== findPromo.verifyPromo) {
                 await this.promosModel.findOneAndUpdate(
                     { _id: promoId },
                     updateFields
                 );
-            }
+            } 
 
-            return { status: 200, message: 'Promo status updated successfully' };
+            return { status: 200, message: 'estimate Promo status updated successfully' };
         } catch (err) {
             console.error('Error updating promo status:', err);
             return { status: 500, message: err.message };
         }
     }
+
 
     async verifyPromo(promoId: string, status: string) {
         if (!promoId || !status) {
@@ -466,7 +466,7 @@ ${data.videos.map((video, index) => `
                     statusPromo: {$in: ["work", "wait", "estimate", "po waiting"]},
                 })
                 .lean();
-            
+
             const promosName = await Promise.all(
                 promos.map(async (item) => {
                     const clientName = await this.clientModel.findById(item.userId);
@@ -478,7 +478,7 @@ ${data.videos.map((video, index) => `
                     };
                 })
             );
-            
+
             return {
                 code: 200,
                 promos: promosName,
@@ -805,19 +805,19 @@ ${data.videos.map((video, index) => `
                     },
                     {
                         $set: {
-                            statusPromo: "work", 
-                            "selectInfluencers.$.confirmation": promoResponse, 
+                            statusPromo: "work",
+                            "selectInfluencers.$.confirmation": promoResponse,
                         },
                     },
-                    {new: true} 
+                    {new: true}
                 );
 
                 const checkUserInfluencer = await this.influencerModel.findById(influencerId);
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} accepted the offer for ${checkUserClient.email}'s campaign</p>
                 <p>Details:</p><br/>
@@ -846,18 +846,18 @@ ${data.videos.map((video, index) => `
                     },
                     {
                         $set: {
-                            "selectInfluencers.$.confirmation": promoResponse, 
+                            "selectInfluencers.$.confirmation": promoResponse,
                         },
                     },
-                    {new: true} 
+                    {new: true}
                 );
 
                 const checkUserInfluencer = await this.influencerModel.findById(influencerId);
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} declined the offer for ${checkUserClient.email}'s campaign</p>
                 <p>Details:</p><br/>
@@ -1051,7 +1051,7 @@ ${data.videos.map((video, index) => `
             };
         }
     }
-    
+
     async updateOngoingPromo(
         influencerId: string,
         instagramUsername: string,
@@ -1085,7 +1085,7 @@ ${data.videos.map((video, index) => `
                     message: "not found",
                 };
             }
-            
+
             const dataInstagram = findNewPromo.selectInfluencers.find(
                 (item) =>
                     item.instagramUsername === instagramUsername &&
