@@ -76,10 +76,13 @@ export class PaymentService {
       doc.text("Intermediary BIC: CHASDEFX", 50, 175);
       doc.text("Bank/Payment institution: Revolut Ltd", 50, 190);
       doc.text(
-        "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
-        50,
-        205
+          "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
+          50,
+          205
       );
+      doc.text("Chamber of Commerce: 10458319", 50, 220);
+      doc.text("Email Address: admin@soundinfluencers.com", 50, 235);
+      doc.text("Phone number: +44 7537 129190", 50, 250);
     } else if (result.countryPay === "eu") {
       doc.fontSize(10).text("TECHNO TV LTD", 50, 100);
       doc.text("124 City Road", 50, 115);
@@ -88,10 +91,13 @@ export class PaymentService {
       doc.text("BIC: REVOGB21", 50, 160);
       doc.text("Bank/Payment institution: Revolut Ltd", 50, 175);
       doc.text(
-        "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
-        50,
-        190
+          "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
+          50,
+          190
       );
+      doc.text("Chamber of Commerce: 10458319", 50, 205);
+      doc.text("Email Address: admin@soundinfluencers.com", 50, 220);
+      doc.text("Phone number: +44 7537 129190", 50, 235);
     } else if (result.countryPay === "uk") {
       doc.fontSize(10).text("TECHNO TV LTD", 50, 100);
       doc.text("124 City Road", 50, 115);
@@ -100,21 +106,28 @@ export class PaymentService {
       doc.text("Sort code: 04-00-75", 50, 160);
       doc.text("Bank/Payment institution: Revolut Ltd", 50, 175);
       doc.text(
-        "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
-        50,
-        190
+          "Bank/Payment institution address: 7 Westferry Circus, E14 4HD, London, United Kingdom",
+          50,
+          190
       );
+      doc.text("Chamber of Commerce: 10458319", 50, 205);
+      doc.text("Email Address: admin@soundinfluencers.com", 50, 220);
+      doc.text("Phone number: +44 7537 129190", 50, 235);
     } else {
       doc.fontSize(10).text("TECHNO TV LTD", 50, 100);
       doc.text("124 City Road", 50, 115);
       doc.text("EC1V 2NX – London – England - UK", 50, 130);
+      doc.text("Chamber of Commerce: 10458319", 50, 145);
+      doc.text("Email Address: admin@soundinfluencers.com", 50, 160);
+      doc.text("Phone number: +44 7537 129190", 50, 175);
     }
+
 
     // Date and Invoice Number
     doc.text(`DATE: ${getFormattedDate()}`, 400, 100);
     doc.text(`INVOICE NO. ${result?._id}`, 400, 115);
 
-    // Bill To
+// Bill To
     doc.text("BILL TO", 50, 240);
     doc.text(result.beneficiary, 50, 255);
     doc.text(result.street + " " + result.country, 50, 270);
@@ -124,27 +137,26 @@ export class PaymentService {
     if (result.vatNumber) {
       doc.text("VAT: " + result.vatNumber, 250, 285);
     }
-    
-    // PO Number
+
+// PO Number
     if (result.poNumber) {
       doc.text(`PO NUMBER: ${result.poNumber}`, 50, 300);
     }
-    
-    // Table headers
+
+// Table headers
     doc.text("DESCRIPTION", 50, 350);
-    // doc.text('QTY', 200, 300);
     doc.text("TOTAL", 250, 350);
 
-    // Table content
+// Table content
     doc.text("Instagram Promotion", 50, 365);
-    // doc.text('1', 200, 315);
     doc.text(result.amount + "€", 250, 365);
 
-    // Payment details
+// Payment details
     doc.text("SUBTOTAL:", 50, 400);
     doc.text(result.amount + "€", 250, 400);
     doc.text("BALANCE DUE:", 50, 415);
     doc.text(result.amount + "€", 250, 415);
+
 
     // Payment method and terms
     doc.text("Payment Terms: Within 7 business days", 50, 465);

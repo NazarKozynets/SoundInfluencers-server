@@ -84,18 +84,21 @@ export class InvoiceService {
     // Bill To
     doc.text("BILL TO", 50, 200);
     doc.text("TECHNO TV LTD", 50, 215);
-    doc.text("124 City Road", 50, 230);
-    doc.text("EC1V 2NX – London – England - UK", 50, 245);
+    doc.text("Chamber of Commerce: 10458319", 50, 230);
+    doc.text("Email Address: admin@soundinfluencers.com", 50, 245);
+    doc.text("Phone number: +44 7537 129190", 50, 260);
+    doc.text("124 City Road", 50, 275);
+    doc.text("EC1V 2NX – London – England - UK", 50, 290);
 
     // Table headers
-    doc.text("DESCRIPTION", 50, 300);
+    doc.text("DESCRIPTION", 50, 330);
     // doc.text('QTY', 200, 300);
-    doc.text("TOTAL", 250, 300);
+    doc.text("TOTAL", 250, 330);
 
     // Table content
-    doc.text(result.beneficiary + " campaign", 50, 315);
+    doc.text(result.beneficiary + " campaign", 50, 350);
     // doc.text('1', 200, 315);
-    doc.text(result.amount + "€", 250, 315);
+    doc.text(result.amount + "€", 250, 350);
 
     // Payment details
     doc.text("SUBTOTAL:", 50, 400);
@@ -104,7 +107,7 @@ export class InvoiceService {
     doc.text(result.amount + "€", 250, 415);
 
     // Payment method and terms
-    doc.text("Payment Terms: Within 7 business days", 50, 465);
+    doc.text("Payment Terms: Within 7 business days", 50, 435);
 
     doc.end();
 
@@ -189,6 +192,7 @@ export class InvoiceService {
         .then(async (pdfPath) => {
           await sendMail(
             "admin@soundinfluencers.com",
+              // "nazarkozynets030606@zohomail.eu",
             `${checkUser.email}`,
             `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramLinks} Selected Payment Method: ${data.selectedPaymentMethod}`,
             "pdf",
