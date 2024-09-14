@@ -34,6 +34,7 @@ export class ProfileService {
         };
       }
 
+      console.log(data);
       const checkUser = await this.clientModel.findOne({ _id: data.id });
 
       if (!checkUser) {
@@ -46,127 +47,8 @@ export class ProfileService {
         { _id: data.id },
         {
           firstName: data.firstName,
-          instagramUsername: data.instagramUsername,
-          refelarCode: data.referalCode,
-          logo: data.logo,
-        },
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-
-  async updateCompanyClient(data: UpdateCompanyClientDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.clientModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.clientModel.findOneAndUpdate(
-        { _id: data.id },
-        {
           company: data.company,
-          companyType: data.companyType,
-        },
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-
-  async updateEmailClient(data: UpdateEmailClientDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.clientModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.clientModel.findOneAndUpdate(
-        { _id: data.id },
-        {
           email: data.email,
-        },
-      );
-
-      await sendMail(
-        checkUser.email,
-        'soundinfluencers',
-        `<p>Email address has been successfully changed in our system. If you have any questions or need further assistance, please contact our support team</p>`,
-        'html',
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-
-  async updatePhoneClient(data: UpdatePhoneClientDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.clientModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.clientModel.findOneAndUpdate(
-        { _id: data.id },
-        {
           phone: data.phone,
         },
       );

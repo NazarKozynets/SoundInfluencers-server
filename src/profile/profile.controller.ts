@@ -33,22 +33,6 @@ export class ProfileController {
     return this.profileService.updatePasswordClient(data);
   }
 
-  @Put('client/company')
-  updateCompanyClient(@Body() data: UpdateCompanyClientDto) {
-    return this.profileService.updateCompanyClient(data);
-  }
-
-  @Put('client/email')
-  updateEmailClient(@Body() data: UpdateEmailClientDto) {
-    return this.profileService.updateEmailClient(data);
-  }
-
-  @Put('client/phone')
-  updatePhoneClient(@Body() data: UpdatePhoneClientDto) {
-    return this.profileService.updatePhoneClient(data);
-  }
-  
-
   @Put('influencer/personal')
   updatePersonalInfluencer(@Body() data: UpdatePersonalInfluencerDto) {
     return this.profileService.updatePersonalInfluencer(data);
