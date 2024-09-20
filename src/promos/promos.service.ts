@@ -32,6 +32,7 @@ export class PromosService {
                     message: "Not enough arguments",
                 };
             }
+
             const processedInfluencers = data.selectInfluencers.map((influencer) => {
                 const selectedVideo = influencer.selectedVideo;
                 const dateRequest = influencer.dateRequest;
@@ -52,31 +53,16 @@ export class PromosService {
                 verifyPromo: "wait",
             });
 
-            const dataClient = await this.clientModel.findOne({_id: data.userId});
+            const dataClient = await this.clientModel.findOne({ _id: data.userId });
             if (+dataClient.balance <= data.amount) {
                 await this.clientModel.findOneAndUpdate(
-                    {_id: data.userId},
-                    {balance: "0"}
+                    { _id: data.userId },
+                    { balance: "0" }
                 );
             }
 
-            const influencerList = await Promise.all(
-                data.selectInfluencers.map(async (item) => {
-                    const dataInfluencer = await this.influencerModel.findOne({
-                        _id: item.influencerId,
-                    });
-
-                    if (!dataInfluencer) return null;
-                    return dataInfluencer;
-                })
-            );
-            const influencerFilter = influencerList.filter((item) => item);
-
-            await sendMail(
-                // "nazarkozynets030606@zohomail.eu",
-                "admin@soundinfluencers.com",
-                "soundinfluencers",
-                `<p>Hi,</p>
+            const emailContent = `
+<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
 <p><strong>Post Details:</strong></p>
 ${data.videos.map((video, index) => `
@@ -88,13 +74,14 @@ ${data.videos.map((video, index) => `
         <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink}</li>
         <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
     </ul>
+    <p><strong>Selected Influencers:</strong></p>
+    <ul>
+        ${data.selectInfluencers
+                .filter(influencer => influencer.selectedVideo === video.videoLink)
+                .map(influencer => `<li>Instagram name: ${influencer.instagramUsername}</li>`)
+                .join('')}
+    </ul>
 `).join('')}
-<p><strong>Selected Influencers:</strong></p>
-<ul>
-    ${data.selectInfluencers.map(
-                    (item) => `<li>Instagram name: ${item.instagramUsername}</li>`
-                ).join('')}
-</ul>
 <p>Payment Method Used: ${result.paymentType}</p>
 <p>
     <a style="font-weight: 600" href="${process.env.SERVER}/promos/verify-promo?promoId=${result._id}&status=accept">
@@ -103,7 +90,13 @@ ${data.videos.map((video, index) => `
     <a style="font-weight: 600" href="${process.env.SERVER}/promos/verify-promo?promoId=${result._id}&status=cancel">
         Decline
     </a>
-</p>`,
+</p>`;
+
+            await sendMail(
+                // "nazarkozynets030606@zohomail.eu",
+                "admin@soundinfluencers.com",
+                "soundinfluencers",
+                emailContent,
                 "html"
             );
 
@@ -119,6 +112,7 @@ ${data.videos.map((video, index) => `
             };
         }
     }
+
 
     async createPromosForEstimate(data: CreatePromosEstimateDto, isPO: boolean = false) {
         try {
