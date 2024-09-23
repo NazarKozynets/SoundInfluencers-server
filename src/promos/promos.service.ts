@@ -9,6 +9,7 @@ import {Influencer} from "src/auth/schemas/influencer.schema";
 import {Offers} from "./schemas/offers.schema";
 import sendMail from "src/utils/sendMail";
 import {DropboxService} from "src/services/Dropbox.service";
+const puppeteer = require('puppeteer');
 
 @Injectable()
 export class PromosService {
@@ -93,8 +94,8 @@ ${data.videos.map((video, index) => `
 </p>`;
 
             await sendMail(
-                "nazarkozynets030606@zohomail.eu",
-                // "admin@soundinfluencers.com",
+                // "nazarkozynets030606@zohomail.eu",
+                "admin@soundinfluencers.com",
                 "soundinfluencers",
                 emailContent,
                 "html"
@@ -145,8 +146,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    "nazarkozynets030606@zohomail.eu",
-                    // "admin@soundinfluencers.com",
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi</p>
                 <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
@@ -204,8 +205,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    "nazarkozynets030606@zohomail.eu",
-                    // "admin@soundinfluencers.com",
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -810,8 +811,8 @@ ${data.videos.map((video, index) => `
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
-                    "nazarkozynets030606@zohomail.eu",
-                    // "admin@soundinfluencers.com",
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} accepted the offer for ${checkUserClient.email}'s campaign</p>
                 <p>Details:</p><br/>
@@ -1235,4 +1236,122 @@ ${data.videos.map((video, index) => `
             data: screenshotUrl,
         };
     }
+
+    // async updateOngoingPromoPostLinkAndDatePost(
+    //     influencerId: string,
+    //     instagramUsername: string,
+    //     promoId: string,
+    //     data: any,
+    // ) {
+    //     if (!influencerId || !promoId || !instagramUsername) {
+    //         return {
+    //             status: 400,
+    //             message: "Not enough arguments",
+    //         };
+    //     }
+    //
+    //     try {
+    //         const findNewPromo = await this.promosModel
+    //             .findOne({
+    //                 _id: promoId,
+    //                 selectInfluencers: {
+    //                     $elemMatch: {
+    //                         influencerId: influencerId,
+    //                         instagramUsername: instagramUsername,
+    //                     },
+    //                 },
+    //             })
+    //             .lean()
+    //             .exec();
+    //
+    //         if (!findNewPromo) {
+    //             return {
+    //                 code: 404,
+    //                 message: "not found",
+    //             };
+    //         }
+    //
+    //         const dataInstagram = findNewPromo.selectInfluencers.find(
+    //             (item) =>
+    //                 item.instagramUsername === instagramUsername &&
+    //                 item.influencerId === influencerId
+    //         );
+    //
+    //         const promises = findNewPromo.selectInfluencers.map(async (item) => {
+    //             if (item.postLink) {
+    //                 try {
+    //                     const browser = await puppeteer.launch();
+    //                     const page = await browser.newPage();
+    //                     await page.goto(item.postLink, { waitUntil: 'load' });
+    //
+    //                     const content = await page.content();
+    //
+    //                     const postDescription = await page.evaluate(() => {
+    //                         const descriptionMeta = document.querySelector('meta[name="description"]');
+    //                         if (descriptionMeta) {
+    //                             return descriptionMeta.getAttribute('content');
+    //                         }
+    //
+    //                         const descriptionDiv = document.querySelector('div[role="dialog"] div') ||
+    //                             document.querySelector('div[class*="C4VMK"] > span'); 
+    //                         return descriptionDiv ? (descriptionDiv as HTMLElement).innerText : "Описание не найдено";
+    //                     });
+    //
+    //                     // Извлечение количества лайков
+    //                     const likesMatch = postDescription.match(/(\d+) likes/);
+    //                     const likesCount = likesMatch ? parseInt(likesMatch[1], 10) : 0;
+    //
+    //                     console.log(`Post Link: ${item.postLink}, Likes: ${likesCount}`);
+    //                     await browser.close();
+    //                 } catch (error) {
+    //                     console.error(`Ошибка при получении данных из ${item.postLink}:`, error.message);
+    //                 }
+    //             }
+    //         });
+    //
+    //         await Promise.all(promises);
+    //
+    //         const updateNewPromo = await this.promosModel.findOneAndUpdate(
+    //             {
+    //                 _id: promoId,
+    //                 selectInfluencers: {
+    //                     $elemMatch: {
+    //                         influencerId: influencerId,
+    //                         instagramUsername: instagramUsername,
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 $set: {
+    //                     "selectInfluencers.$": {
+    //                         ...dataInstagram,
+    //                         postLink: data.postLink || dataInstagram.postLink,
+    //                         datePost: data.datePost || dataInstagram.datePost,
+    //                     },
+    //                 },
+    //             },
+    //         );
+    //
+    //         let checkPromo = findNewPromo.selectInfluencers.every((item) =>
+    //             item.postLink && item.datePost
+    //         );
+    //
+    //         if (checkPromo) {
+    //             await this.promosModel.findOneAndUpdate(
+    //                 { _id: promoId },
+    //                 { statusPromo: "finally" }
+    //             );
+    //         }
+    //
+    //         return {
+    //             code: 200,
+    //             updateNewPromo,
+    //         };
+    //     } catch (err) {
+    //         return {
+    //             code: 500,
+    //             message: err.message || "Internal server error",
+    //         };
+    //     }
+    // }
 }
