@@ -93,8 +93,8 @@ ${data.videos.map((video, index) => `
 </p>`;
 
             await sendMail(
-                // "nazarkozynets030606@zohomail.eu",
-                "admin@soundinfluencers.com",
+                "nazarkozynets030606@zohomail.eu",
+                // "admin@soundinfluencers.com",
                 "soundinfluencers",
                 emailContent,
                 "html"
@@ -145,8 +145,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi</p>
                 <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
@@ -204,8 +204,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -810,8 +810,8 @@ ${data.videos.map((video, index) => `
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} accepted the offer for ${checkUserClient.email}'s campaign</p>
                 <p>Details:</p><br/>
