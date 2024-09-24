@@ -564,8 +564,7 @@ ${data.videos.map((video, index) => `
             };
         }
     }
-
-
+    
     async historyPromosInfluencer(id: string) {
         try {
             if (!id) {

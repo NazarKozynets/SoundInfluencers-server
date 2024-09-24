@@ -6,10 +6,10 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    // user: process.env.EMAIL_USER,
-    user: 'nazarkozynets030606@zohomail.eu',
-    // pass: process.env.EMAIL_PASS,
-    pass: 'NazKoz030606_'
+    user: process.env.EMAIL_USER,
+    // user: 'nazarkozynets030606@zohomail.eu',
+    pass: process.env.EMAIL_PASS,
+    // pass: 'NazKoz030606_'
   },
 });
 
