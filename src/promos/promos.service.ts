@@ -9,7 +9,7 @@ import {Influencer} from "src/auth/schemas/influencer.schema";
 import {Offers} from "./schemas/offers.schema";
 import sendMail from "src/utils/sendMail";
 import {DropboxService} from "src/services/Dropbox.service";
-const puppeteer = require('puppeteer');
+import * as process from "node:process";
 
 @Injectable()
 export class PromosService {
@@ -66,6 +66,7 @@ export class PromosService {
 <p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
 <p><strong>Post Details:</strong></p>
+<p><strong>Campaign Name: ${data.campaignName}</strong></p>
 ${data.videos.map((video, index) => `
     <p><strong>Video ${index + 1}:</strong></p>
     <ul>
@@ -113,8 +114,7 @@ ${data.videos.map((video, index) => `
             };
         }
     }
-
-
+    
     async createPromosForEstimate(data: CreatePromosEstimateDto, isPO: boolean = false) {
         try {
             if (!data) {
@@ -287,7 +287,6 @@ ${data.videos.map((video, index) => `
         }
     }
 
-
     async verifyPromo(promoId: string, status: string) {
         if (!promoId || !status) {
             return {
@@ -311,11 +310,58 @@ ${data.videos.map((video, index) => `
                 {verifyPromo: status}
             );
 
+            if (status === "accept") {
+                const checkPromo = await this.promosModel.findById(promoId);
+                const influencersIds = checkPromo.selectInfluencers.map((item) => item.influencerId);
 
-            return {
-                code: 200,
-                message: "ok",
-            };
+                const influencers = await this.influencerModel.find({_id: {$in: influencersIds}});
+
+                for (let influencer of influencers) {
+                    const influencerInstagramAccounts = influencer.instagram.map((account) => account.instagramUsername); 
+
+                    const influencerVideos = checkPromo.videos.filter((video) => {
+                        return checkPromo.selectInfluencers.some((influencerData) => {
+                            return influencerData.selectedVideo === video.videoLink && influencerInstagramAccounts.includes(influencerData.instagramUsername);
+                        });
+                    });
+
+                    if (influencerVideos.length > 0) {
+                        const accountNames = influencer.instagram
+                            .filter(account => influencerVideos.some(video => {
+                                return checkPromo.selectInfluencers.some(influencerData => influencerData.selectedVideo === video.videoLink && influencerData.instagramUsername === account.instagramUsername);
+                            }))
+                            .map(account => account.instagramUsername)
+                            .join(', '); 
+
+                        const emailToInfluencer = `
+<p>Hi,</p>
+<p>You have received a new promo request on your account for the following:</p>
+<p><strong>${accountNames} - Instagram Post & Story</strong></p>
+<p><strong>Post Details:</strong></p>
+${influencerVideos.map((video, index) => `
+    <p><strong>Video ${index + 1}:</strong></p>
+    <ul>
+        <li><strong>Link:</strong> ${video.videoLink || 'No link provided'}</li>
+        <li><strong>Post Description:</strong> ${video.postDescription || 'No description provided'}</li>
+        <li><strong>Story Tag:</strong> ${video.storyTag || 'No story tag provided'}</li>
+        <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink || 'No post link provided'}</li>
+        <li><strong>Special Wishes:</strong> ${video.specialWishes || 'None'}</li>
+    </ul>
+`).join('')}      
+<p>Access your account to accept or deny it here: https://go.soundinfluencers.com/account/influencer/new-promos</p>     
+<p>Thanks,</p>
+<p>Soundinfluencers Team</p>
+`;
+
+                        await sendMail(influencer.email, "soundinfluencers", emailToInfluencer, "html");
+                    }
+                }
+
+                return {
+                    code: 200,
+                    message: "promo verified",
+                };
+            }
         } catch (err) {
             return {
                 code: 500,
@@ -877,7 +923,6 @@ ${data.videos.map((video, index) => `
         }
     }
 
-
     async getOngoingPromos(influencerId: string) {
         try {
             if (!influencerId) {
@@ -1234,6 +1279,38 @@ ${data.videos.map((video, index) => `
             code: 200,
             data: screenshotUrl,
         };
+    }
+    
+    async getPromoByPublicShareLink(promoId: string) {
+        try {
+            if (!promoId) {
+                return {
+                    status: 400,
+                    message: "Not enough arguments",
+                };
+            }
+
+            const promo = await this.promosModel.findById(promoId);
+
+            if (!promo) {
+                return {
+                    code: 404,
+                    message: "Promo not found",
+                };
+            }
+
+            return {
+                code: 200,
+                promo,
+            };
+        } catch (err) {
+            console.error('Error fetching promo by public share link:', err);
+
+            return {
+                code: 500,
+                message: err,
+            };
+        }
     }
 
     // async updateOngoingPromoPostLinkAndDatePost(

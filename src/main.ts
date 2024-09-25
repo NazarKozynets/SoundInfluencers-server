@@ -6,7 +6,7 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.enableCors({
         // origin: ['http://localhost:3001', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные домены
-        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://api.soundinfluencers.com ', 'https://nazar.soundinfluencers.com', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные д>
+        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://api.soundinfluencers.com', 'https://nazar.soundinfluencers.com', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные д>
         methods: 'GET,PUT,POST,DELETE', // Разрешенные HTTP методы
         allowedHeaders: 'Content-Type, Authorization', // Разрешенные заголовки
     });

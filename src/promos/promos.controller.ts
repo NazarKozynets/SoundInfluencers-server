@@ -177,6 +177,12 @@ export class PromosController {
             body,
         );
     }
+    
+    @ApiQuery({name: 'promoId', required: true})
+    @Get('share-link')
+    getPromoByPublicShareLink(@Query() args: { promoId: string }) {
+        return this.promosService.getPromoByPublicShareLink(args.promoId);
+    }
 
     // @ApiQuery({name: 'influencerId', required: true})
     // @ApiQuery({name: 'instagramUsername', required: true})
