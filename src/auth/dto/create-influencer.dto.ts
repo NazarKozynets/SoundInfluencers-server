@@ -84,4 +84,7 @@ export class CreateInfluencerDto {
 
     @ApiProperty()
     password: string;
+    
+    @ApiProperty()
+    internalNote: string;
 }

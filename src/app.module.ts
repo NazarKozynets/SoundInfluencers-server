@@ -12,12 +12,14 @@ import { FileModule } from './file/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PaymentModule } from './payment/payment.module';
+import {AdminModule} from "./admin/admin.module";
 
 @Module({
   imports: [
     MongooseModule.forRoot(
         'mongodb+srv://test:b1fA5EG9SNuA0M35@cluster0.svrxsep.mongodb.net/music',
         // 'mongodb+srv://test:b1fA5EG9SNuA0M35@cluster0.svrxsep.mongodb.net/music_dev',
+        // 'mongodb+srv://test:b1fA5EG9SNuA0M35@cluster0.svrxsep.mongodb.net/dev_db',
     ),
     AuthModule,
     ForgotModule,
@@ -31,6 +33,7 @@ import { PaymentModule } from './payment/payment.module';
       serveRoot: '/uploads',
     }),
     PaymentModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

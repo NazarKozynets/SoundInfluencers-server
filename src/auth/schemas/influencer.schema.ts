@@ -77,6 +77,9 @@ export class Influencer extends Document {
 
     @Prop({default: 'wait'})
     statusVerify: string;
+
+    @Prop({default: ''})
+    internalNote: string;
 }
 
 export const InfluencerSchema = SchemaFactory.createForClass(Influencer);

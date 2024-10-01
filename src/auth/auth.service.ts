@@ -110,7 +110,7 @@ export class AuthService {
                 ...data,
                 referenceNumber: generateRandomDigits(6),
                 password: bcrypt.hashSync(data.password),
-                balance: "0"
+                balance: "0",
             });
 
             const generateVerifyId = generateRandomString();
@@ -121,7 +121,8 @@ export class AuthService {
             });
 
             await sendMail(
-                'admin@soundinfluencers.com',
+                'nazarkozynets030606@zohomail.eu',
+                // 'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new client ${data.company}</p><b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
         <p>Company: ${data.company}</p>
@@ -631,10 +632,31 @@ export class AuthService {
             };
         }
     }
+    
+    async getClients() {
+        try {
+            const getClientsAll = await this.clientModel
+                .find({statusVerify: 'accept'})
+                .select(['-password'])
+                .lean()
+                .exec();
+
+            return {
+                code: 200,
+                clients: getClientsAll,
+            };
+        } catch (err) {
+            console.log(err);
+            return {
+                code: 500,
+                message: err,
+            };
+        }
+    }
 
     async getInfluencerById(id: string) {
         try {
-            const objectId = new Types.ObjectId(id); // Преобразуем строку в ObjectId
+            const objectId = new Types.ObjectId(id); 
 
             const getInfluencer = await this.influencerModel
                 .findOne({_id: objectId})
@@ -645,6 +667,29 @@ export class AuthService {
             return {
                 code: 200,
                 influencer: getInfluencer,
+            };
+        } catch (err) {
+            console.log(err);
+            return {
+                code: 500,
+                message: err,
+            };
+        }
+    }
+    
+    async getClientById(id: string) {
+        try {
+            const objectId = new Types.ObjectId(id); 
+
+            const getClient = await this.clientModel
+                .findOne({_id: objectId})
+                .select(['-password'])
+                .lean()
+                .exec();
+
+            return {
+                code: 200,
+                client: getClient,
             };
         } catch (err) {
             console.log(err);
