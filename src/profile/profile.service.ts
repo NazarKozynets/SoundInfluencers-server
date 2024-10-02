@@ -5,15 +5,10 @@ import { Influencer } from 'src/auth/schemas/influencer.schema';
 import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdatePasswordClientDto } from './dto/update-password.dto';
-import { UpdateCompanyClientDto } from './dto/update-company-client.dto';
-import { UpdateEmailClientDto } from './dto/update-email-client.dto';
-import { UpdatePhoneClientDto } from './dto/update-phone-client.dto';
 import { UpdatePersonalInfluencerDto } from './dto/update-personal-influencer.dto';
 import { UpdateMusicStyleInfluencerDto } from './dto/update-music-influencer.dto';
 import { UpdateEmailInfluencerDto } from './dto/update-email-influencer.dto';
 import { UpdatePhoneInfluencerDto } from './dto/update-phone-influencer.dto';
-import { UpdateCountriesInfluencersDto } from './dto/update-countries-influencers.dto';
-import sendMail from 'src/utils/sendMail';
 const bcrypt = require('bcryptjs');
 
 @Injectable()
