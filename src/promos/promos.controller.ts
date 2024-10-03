@@ -67,7 +67,11 @@ export class PromosController {
         return this.promosService.uploadDropBox(file);
     }
 
-
+    @Get('check-upload-status')
+    async checkUploadStatus(@Query('fileName') fileName: string): Promise<boolean> {
+        return await this.promosService.checkUploadStatus(fileName); 
+    }
+    
     @ApiQuery({name: 'id', required: true})
     @Get('history')
     historyPromos(@Query() args: { id: string }) {

@@ -25,52 +25,96 @@ export class DropboxService {
     });
   }
 
-  async uploadFile(fileBuffer: Buffer, fileName: string): Promise<string> {
+  async isFileUploaded(fileName: string): Promise<boolean> {
     try {
-      let response = await this.dbx.filesUpload({
-        path: "/" + new Date().toISOString() + fileName,
-        contents: fileBuffer,
-      });
-
-      // Create a shareable link
-      const shareLink = await this.dbx.sharingCreateSharedLinkWithSettings({
-        path: response.result.path_lower,
-        settings: {
-          requested_visibility: { ".tag": "public" }, // Set visibility to public
-        },
-      });
-
-      return shareLink.result.url.replace(
-        "www.dropbox.com",
-        "dl.dropboxusercontent.com"
-      );
+      const response = await this.dbx.filesListFolder({ path: '' }); 
+      const fileExists = response.result.entries.some((entry) => entry.name === fileName);
+      return fileExists; 
     } catch (error) {
-      if (
-        error &&
-        error.status === 401 &&
-        error.error.error_summary.includes("expired_access_token")
-      ) {
-        const newDbx = await this.refreshTokenIfNeeded();
-        if (newDbx) {
-          return this.uploadFile(fileBuffer, fileName); // Retry after refresh
-        }
-      } else {
-        console.error("Error uploading file to Dropbox", error);
-        throw new Error("Unable to upload file to Dropbox");
-      }
+      return false; 
     }
   }
-  async refreshTokenIfNeeded() {
+  async uploadFile(fileBuffer: Buffer, fileName: string): Promise<string> {
+    const CHUNK_SIZE = 16 * 1024 * 1024; // 8MB
+    const fileSize = fileBuffer.length;
+
     try {
-      const clientId = this.dbxAuth.getClientId(); // Simplified
-      this.dbxAuth.setClientId(clientId); // Simplified
-      await this.dbxAuth.checkAndRefreshAccessToken(); // Simplified
-      const response = this.dbxAuth.getAccessToken(); // Simplified
-      this.accessToken = response;
-      this.dbx = new Dropbox({ accessToken: this.accessToken });
-      return this.dbx;
+      if (fileSize <= CHUNK_SIZE) {
+        const response = await this.dbx.filesUpload({
+          path: "/" + new Date().toISOString() + fileName,
+          contents: fileBuffer,
+        });
+
+        const shareLink = await this.dbx.sharingCreateSharedLinkWithSettings({
+          path: response.result.path_lower,
+          settings: { requested_visibility: { ".tag": "public" } },
+        });
+
+        return shareLink.result.url.replace("www.dropbox.com", "dl.dropboxusercontent.com");
+      } else {
+        let sessionId = await this.startUploadSession(fileBuffer.slice(0, CHUNK_SIZE));
+
+        let promises = [];
+        let offset = CHUNK_SIZE;
+        while (offset < fileSize) {
+          const chunk = fileBuffer.slice(offset, offset + CHUNK_SIZE);
+          promises.push(this.appendUploadSession(sessionId, chunk, offset));
+          offset += CHUNK_SIZE;
+        }
+
+        await Promise.all(promises);
+
+        const resultUrl = await this.finishUploadSession(sessionId, fileBuffer.slice(offset - CHUNK_SIZE), fileName);
+        return resultUrl;
+      }
     } catch (error) {
-      console.error("Error refreshing Dropbox token", error);
+      console.error("Error uploading file to Dropbox", error);
+      throw new Error("Unable to upload file to Dropbox");
     }
+  }
+
+  async startUploadSession(firstChunk: Buffer): Promise<string> {
+    const response = await this.dbx.filesUploadSessionStart({
+      close: false,
+      contents: firstChunk,
+    });
+    return response.result.session_id;
+  }
+
+  async appendUploadSession(sessionId: string, chunk: Buffer, offset: number): Promise<void> {
+    await this.dbx.filesUploadSessionAppendV2({
+      cursor: {
+        session_id: sessionId,
+        offset: offset,
+      },
+      contents: chunk,
+    });
+  }
+
+  async finishUploadSession(sessionId: string, lastChunk: Buffer, fileName: string): Promise<string> {
+    const response = await this.dbx.filesUploadSessionFinish({
+      cursor: {
+        session_id: sessionId,
+        offset: lastChunk.length,
+      },
+      commit: {
+        path: `/${fileName}`,
+        mode: { ".tag": "add" },
+        autorename: true,
+      },
+      contents: lastChunk,
+    });
+
+    const shareLink = await this.dbx.sharingCreateSharedLinkWithSettings({
+      path: response.result.path_lower,
+      settings: {
+        requested_visibility: { ".tag": "public" },
+      },
+    });
+
+    return shareLink.result.url.replace(
+        "www.dropbox.com",
+        "dl.dropboxusercontent.com"
+    );
   }
 }
