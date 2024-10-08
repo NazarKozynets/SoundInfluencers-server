@@ -837,7 +837,7 @@ ${influencerVideos.map((video, index) => `
                 };
             }
 
-            if (findNewPromo.statusPromo === "wait" && promoResponse === "accept") {
+            if ((findNewPromo.statusPromo === "wait" || findNewPromo.statusPromo === 'work') && promoResponse === "accept") {
                 const updateNewPromo = await this.promosModel.findOneAndUpdate(
                     {
                         _id: promoId,
