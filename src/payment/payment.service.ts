@@ -11,6 +11,7 @@ import { Client } from "src/auth/schemas/client.schema";
 import { InvoiceDetails } from "src/invoice/schemas/invoice-details.schema";
 import sendMail from "src/utils/sendMail";
 import { log } from "console";
+import {Response} from "express";
 const gocardless = require("gocardless-nodejs");
 const constants = require("gocardless-nodejs/constants");
 
@@ -251,7 +252,6 @@ export class PaymentService {
         message: "Not enough arguments",
       };
     }
-    console.log(data, "data")
     const createId = generateId();
 
     try {
@@ -260,7 +260,8 @@ export class PaymentService {
         userId: data.userId,
         amount: String(data.amount),
         statusOrder: "accept",
-        paymentType: "transfer",
+        paymentType: data.paymentMethod,
+        campaignName: data.campaignName,
       });
 
       const invoiceDetail = await this.invoiceDetail.find({ id: data.userId });
@@ -455,6 +456,46 @@ export class PaymentService {
         code: 200,
         message: "ok",
       };
+    } catch (err) {
+      console.log(err);
+      return {
+        code: 500,
+        message: err,
+      };
+    }
+  }
+  
+  async downloadPaymentInvoice(invoiceId: string, res: Response) {
+    if (!invoiceId) {
+      return {
+        code: 400,
+        message: "Not enough arguments",
+      };
+    }
+
+    try {
+      const checkOrder = await this.paymentModel.findOne({_id: invoiceId});
+
+      if (!checkOrder) {
+        return {
+          code: 404,
+          message: "not found order",
+        };
+      }
+
+      const pdfFilePath = await this.createPDF(checkOrder, {});
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice_${invoiceId}.pdf`);
+
+      const fileStream = fs.createReadStream(pdfFilePath);
+
+      fileStream.pipe(res);
+
+      fileStream.on('end', () => {
+        fs.unlinkSync(pdfFilePath);
+      });
+
     } catch (err) {
       console.log(err);
       return {

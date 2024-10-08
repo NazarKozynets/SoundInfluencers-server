@@ -9,6 +9,9 @@ import {AdminUpdatePersonalClientDto} from "./dto/admin-update-client.dto";
 import {AdminUpdateInfluencerPersonalDto} from "./dto/admin-update-influencer-personal.dto";
 import {AdminUpdateInfluencerInstagramDto} from "./dto/admin-update-influencer-instagram.dto";
 import {Invoices} from "../invoice/schemas/invoices.schema";
+import {AdminUpdateInfluencerInvoiceDto} from "./dto/admin-update-influencer-invoice.dto";
+import {Payment} from "../payment/schemas/payment.entity";
+import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update";
 
 
 @Injectable()
@@ -23,7 +26,9 @@ export class AdminService {
         @InjectModel(Offers.name)
         private offersModel: mongoose.Model<Offers>,
         @InjectModel(Invoices.name)
-        private invoicesModel: mongoose.Model<Invoices>
+        private invoicesModel: mongoose.Model<Invoices>,
+        @InjectModel(Payment.name)
+        private paymentModel: mongoose.Model<Payment>
     ) {
     }
 
@@ -142,9 +147,9 @@ export class AdminService {
             });
 
             const invoicePromises = influencers.map(influencer =>
-                this.invoicesModel.findOne({ influencerId: influencer._id })
-                    .sort({ createdAt: -1 }) 
-                    .lean() 
+                this.invoicesModel.findOne({influencerId: influencer._id})
+                    .sort({createdAt: -1})
+                    .lean()
                     .exec()
             );
 
@@ -204,7 +209,7 @@ export class AdminService {
                         email: influencer.email,
                         avatar: influencerAvatars[influencer._id][insta.instagramUsername],
                         internalNote: influencer.internalNote,
-                        latestInvoice: invoiceMap[influencer._id] || "No Invoice", 
+                        latestInvoice: invoiceMap[influencer._id] || "No Invoice",
                         campaignsCompleted: promoMap[insta.instagramUsername]?.campaignsCompleted || 0,
                         campaignsDenied: promoMap[insta.instagramUsername]?.campaignsDenied || 0,
                     });
@@ -224,7 +229,6 @@ export class AdminService {
             };
         }
     }
-
 
     async adminUpdatePersonalInfluencer(data: AdminUpdateInfluencerPersonalDto) {
         try {
@@ -314,7 +318,7 @@ export class AdminService {
 
     async adminGetOneInfluencerInstaAccount(influencerId: string, instagramUsername: string) {
         try {
-            const influencer = await this.influencerModel.findOne({ _id: influencerId }).lean().exec();
+            const influencer = await this.influencerModel.findOne({_id: influencerId}).lean().exec();
 
             if (!influencer) {
                 return {
@@ -358,6 +362,243 @@ export class AdminService {
             return {
                 status: 200,
                 data: result,
+            };
+
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: err.message || 'An unknown error occurred',
+            };
+        }
+    }
+
+    async adminGetAllInvoices() {
+        try {
+            const invoices = await this.invoicesModel
+                .find()
+                .sort({createdAt: -1})
+                .lean()
+                .exec();
+
+            if (!invoices || invoices.length === 0) {
+                return {
+                    status: 404,
+                    message: 'No invoices found',
+                };
+            }
+
+            return {
+                status: 200,
+                data: invoices,
+            };
+
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: err.message || 'An unknown error occurred',
+            };
+        }
+    }
+
+    async adminUpdateInfluencerInvoice(data: AdminUpdateInfluencerInvoiceDto) {
+        try {
+            if (!data) {
+                return {
+                    status: 400,
+                    message: 'Not enough arguments',
+                };
+            }
+
+            const checkInvoice = await this.invoicesModel.findOne({_id: data._id});
+
+            if (!checkInvoice) {
+                return {
+                    code: 404,
+                    message: 'Invoice not found',
+                };
+            }
+
+            await this.invoicesModel.findOneAndUpdate(
+                {_id: data._id},
+                {
+                    ...data
+                },
+            );
+
+            return {
+                code: 200,
+                message: 'Invoice update',
+            };
+
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            }
+        }
+    }
+
+    async adminGetOneInfluencerInvoice(invoiceId: string) {
+        try {
+            const invoice = await this.invoicesModel.findOne({_id: invoiceId}).lean().exec();
+
+            if (!invoice) {
+                return {
+                    status: 404,
+                    message: 'Invoice not found',
+                };
+            }
+
+            return {
+                status: 200,
+                data: invoice,
+            };
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            };
+        }
+    }
+
+    async adminGetAllClientsPayments() {
+        try {
+            const payments = await this.paymentModel
+                .find()
+                .sort({createdAt: -1})
+                .lean()
+                .exec();
+
+            if (!payments || payments.length === 0) {
+                return {
+                    status: 404,
+                    message: 'No payments found',
+                };
+            }
+
+            const result = await Promise.all(payments.map(async (payment) => {
+                const user = await this.clientModel.findOne({_id: payment.userId}).lean().exec();
+                return {
+                    ...payment,
+                    companyName: user.company,
+                };
+            }));
+
+            return {
+                status: 200,
+                data: result,
+            };
+
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: err.message || 'An unknown error occurred',
+            };
+        }
+    }
+
+    async adminUpdateClientPayment(data: AdminUpdateClientPayment) {
+        try {
+            if (!data) {
+                return {
+                    status: 400,
+                    message: 'Not enough arguments',
+                };
+            }
+
+            const checkPayment = await this.paymentModel.findOne({_id: data._id});
+
+            if (!checkPayment) {
+                return {
+                    code: 404,
+                    message: 'Payment not found',
+                };
+            }
+
+            await this.paymentModel.findOneAndUpdate(
+                {_id: data._id},
+                {
+                    ...data
+                },
+            );
+
+            const user = await this.clientModel.findOne({_id: data.userId}).lean().exec();
+
+                await this.clientModel.findOneAndUpdate(
+                    {_id: data.userId},
+                    {
+                        company: data.companyName
+                    },
+                );
+            
+            // if (!user) {
+            //     return {
+            //         code: 404,
+            //         message: 'User not found',
+            //     };
+            // }
+
+            return {
+                code: 200,
+                message: 'Payment update',
+            };
+
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            }
+        }
+    }
+
+    async adminGetOneClientPayment(_id: string) {
+        try {
+            const payment = await this.paymentModel.findOne({_id}).lean().exec();
+
+            if (!payment) {
+                return {
+                    status: 404,
+                    message: 'Payment not found',
+                };
+            }
+
+            const user = await this.clientModel.findOne({_id: payment.userId}).lean().exec();
+
+            return {
+                status: 200,
+                data: {
+                    ...payment,
+                    companyName: user.company,
+                },
+            };
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            };
+        }
+    }
+    
+    
+    
+
+    async adminGetAllPromos() {
+        try {
+            const promos = await this.promosModel.find().sort({createdAt: -1}).lean().exec();
+
+            if (!promos || promos.length === 0) {
+                return {
+                    status: 404,
+                    message: 'No promos found',
+                };
+            }
+
+            return {
+                status: 200,
+                data: promos,
             };
 
         } catch (err) {

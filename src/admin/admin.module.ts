@@ -7,6 +7,7 @@ import {Influencer, InfluencerSchema} from "../auth/schemas/influencer.schema";
 import {Offers, OffersSchema} from "../promos/schemas/offers.schema";
 import {AdminController} from "./admin.controller";
 import {Invoices} from "../invoice/schemas/invoices.schema";
+import {Payment} from "../payment/schemas/payment.entity";
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import {Invoices} from "../invoice/schemas/invoices.schema";
             {name: Influencer.name, schema: InfluencerSchema},
             {name: Offers.name, schema: OffersSchema},
             {name: Invoices.name, schema: Invoices},
+            {name: Payment.name, schema: Payment},
         ]),
     ],
     controllers: [AdminController],

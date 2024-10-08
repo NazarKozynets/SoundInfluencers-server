@@ -18,6 +18,9 @@ export class Payment {
 
   @Prop({ default: 'wait' })
   statusOrder: string;
+  
+  @Prop()
+  campaignName: string;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

@@ -1,89 +1,92 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import {Schema, Prop, SchemaFactory} from '@nestjs/mongoose';
 
 @Schema({
-  timestamps: true,
+    timestamps: true,
 })
 export class SaveInvoiceData {
-  @Prop()
-  description: string;
-  
-  @Prop()
-  influencerId: string;
+    @Prop()
+    description: string;
 
-  @Prop()
-  status: string;
+    @Prop()
+    influencerId: string;
 
-  @Prop()
-  payee: string;
+    @Prop()
+    status: string;
 
-  @Prop()
-  bankName: string;
+    @Prop()
+    payee: string;
 
-  @Prop()
-  beneficiary: string;
+    @Prop()
+    bankName: string;
 
-  @Prop()
-  beneficiaryAddress: string;
+    @Prop()
+    beneficiary: string;
 
-  @Prop()
-  iban: string;
+    @Prop()
+    beneficiaryAddress: string;
 
-  @Prop()
-  bankCountry: string;
+    @Prop()
+    iban: string;
 
-  @Prop()
-  bankAccountCurrency: string;
+    @Prop()
+    bankCountry: string;
 
-  @Prop()
-  sortCode: string;
+    @Prop()
+    bankAccountCurrency: string;
 
-  @Prop()
-  accountNumber: string;
+    @Prop()
+    sortCode: string;
 
-  @Prop()
-  swiftOrBic: string;
+    @Prop()
+    accountNumber: string;
 
-  @Prop()
-  contactName: string;
+    @Prop()
+    swiftOrBic: string;
 
-  @Prop()
-  contactPhone: string;
+    @Prop()
+    contactName: string;
 
-  @Prop()
-  contactEmail: string;
+    @Prop()
+    contactPhone: string;
 
-  @Prop()
-  companyName: string;
+    @Prop()
+    contactEmail: string;
 
-  @Prop()
-  companyId: string;
+    @Prop()
+    companyName: string;
 
-  @Prop()
-  street: string;
+    @Prop()
+    companyId: string;
 
-  @Prop()
-  city: string;
+    @Prop()
+    street: string;
 
-  @Prop()
-  state: string;
+    @Prop()
+    city: string;
 
-  @Prop()
-  postcode: string;
+    @Prop()
+    state: string;
 
-  @Prop()
-  vat: string;
+    @Prop()
+    postcode: string;
 
-  @Prop()
-  country: string;
+    @Prop()
+    vat: string;
 
-  @Prop()
-  notes: string;
+    @Prop()
+    country: string;
 
-  @Prop()
-  amount: number;
+    @Prop()
+    notes: string;
 
-  @Prop({ default: '' })
-  fileUrl: string;
+    @Prop()
+    amount: number;
+
+    @Prop()
+    selectedPaymentMethod: string;
+
+    @Prop({default: ''})
+    fileUrl: string;
 }
 
 export const SaveInvoiceDataSchema = SchemaFactory.createForClass(SaveInvoiceData);

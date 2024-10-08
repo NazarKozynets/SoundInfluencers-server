@@ -7,7 +7,7 @@ async function bootstrap() {
     app.enableCors({
         // origin: ['http://localhost:3001', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные домены
         origin: ['http://localhost:3000', 'http://localhost:3001', 'https://api.soundinfluencers.com', 'https://nazar.soundinfluencers.com', 'https://music-front-alpha.vercel.app', 'https://go.soundinfluencers.com'], // Разрешенные д>
-        methods: 'GET,PUT,POST,DELETE', // Разрешенные HTTP методы
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Разрешенные HTTP методы
         allowedHeaders: 'Content-Type, Authorization', // Разрешенные заголовки
     });
     const config = new DocumentBuilder()
@@ -18,9 +18,9 @@ async function bootstrap() {
         // .addServer('https://api.soundinfluencers.com') // Добавление базового URL
         .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
-    // SwaggerModule.setup('api-nazar', app, document);
-    await app.listen(3001);
+    // SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api-nazar', app, document);
+    await app.listen(3000);
 }
 
 bootstrap();
