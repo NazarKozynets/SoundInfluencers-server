@@ -88,4 +88,9 @@ export class AdminController {
     adminGetAllPromos() {
         return this.adminService.adminGetAllPromos();
     }
+    
+    @Post('send-invoice-client')
+    adminSendNewInvoiceToClient(@Body() data: any) {
+        return this.adminService.adminSendNewInvoiceToClient(data);
+    }
 }

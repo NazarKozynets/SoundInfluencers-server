@@ -12,7 +12,11 @@ import {Invoices} from "../invoice/schemas/invoices.schema";
 import {AdminUpdateInfluencerInvoiceDto} from "./dto/admin-update-influencer-invoice.dto";
 import {Payment} from "../payment/schemas/payment.entity";
 import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update";
+import {UpdatePhoneClientDto} from "../profile/dto/update-phone-client.dto";
+import sendMail from "../utils/sendMail";
 
+const fs = require("fs");
+const PDFDocument = require("pdfkit");
 
 @Injectable()
 export class AdminService {
@@ -30,6 +34,56 @@ export class AdminService {
         @InjectModel(Payment.name)
         private paymentModel: mongoose.Model<Payment>
     ) {
+    }
+
+    async createPDF(data: any) {
+        const doc = new PDFDocument();
+        const writeStream = fs.createWriteStream("invoice.pdf");
+        doc.pipe(writeStream);
+
+        // Header
+        doc.fontSize(20).text("INVOICE", 50, 50);
+
+        // Sender's details
+        doc.fontSize(10).text(data.fromCompanyName, 50, 100);
+        doc.text(data.address, 50, 115);
+        doc.text(data.townCountry, 50, 130);
+        doc.text("Chamber of Commerce: " + data.chamberOfCommerce, 50, 145);
+        doc.text("Email Address: " + data.email, 50, 160);
+        doc.text("Phone number: " + data.phone, 50, 175);
+
+
+        // Date and Invoice Number
+        doc.text(`DATE: ${data.date}`, 400, 100);
+        doc.text(`INVOICE NO. ${data.invoiceNo}`, 400, 115);
+
+// Bill To
+        doc.text("BILL TO", 50, 240);
+        doc.text(data.companyName, 50, 255);
+// Table headers
+        doc.text("DESCRIPTION", 50, 350);
+        doc.text("TOTAL", 250, 350);
+
+// Table content
+        doc.text("Instagram Promotion", 50, 365);
+        doc.text(data.total + "€", 250, 365);
+
+// Payment details
+        doc.text("SUBTOTAL:", 50, 400);
+        doc.text(data.subtotal + "€", 250, 400);
+        doc.text("BALANCE DUE:", 50, 415);
+        doc.text(data.balanceDue + "€", 250, 415);
+
+
+        // Payment method and terms
+        doc.text("Payment Terms: Within 7 business days", 50, 465);
+
+        doc.end();
+
+        return new Promise((resolve, reject) => {
+            writeStream.on("finish", () => resolve("invoice.pdf"));
+            writeStream.on("error", reject);
+        });
     }
 
     async adminGetClients() {
@@ -127,7 +181,11 @@ export class AdminService {
 
     async adminGetAllInfluencerInstaAccounts() {
         try {
-            const influencers = await this.influencerModel.find({statusVerify: 'accept'}).lean().exec();
+            const influencers = await this.influencerModel
+                .find({statusVerify: 'accept'})
+                .select(['-password'])
+                .lean()
+                .exec();
 
             if (!influencers || influencers.length === 0) {
                 return {
@@ -527,13 +585,13 @@ export class AdminService {
 
             const user = await this.clientModel.findOne({_id: data.userId}).lean().exec();
 
-                await this.clientModel.findOneAndUpdate(
-                    {_id: data.userId},
-                    {
-                        company: data.companyName
-                    },
-                );
-            
+            await this.clientModel.findOneAndUpdate(
+                {_id: data.userId},
+                {
+                    company: data.companyName
+                },
+            );
+
             // if (!user) {
             //     return {
             //         code: 404,
@@ -581,13 +639,53 @@ export class AdminService {
             };
         }
     }
-    
-    
-    
+
+    async adminSendNewInvoiceToClient(data: any) {
+        try {
+            const user = await this.clientModel.findOne({_id: data.userId}).lean().exec();
+
+            if (!user) {
+                return {
+                    status: 404,
+                    message: 'User not found',
+                };
+            }
+
+            await this.createPDF(data).then(async (path) => {
+                const emailToSend = user.email;
+
+                await sendMail(
+                    emailToSend,
+                    "Invoice",
+                    `<p>Hello,</p>
+          <p>Please find attached the invoice for your SoundInfluencers campaign.</p><br/>
+          <p> To monitor the progress of your campaign, please visit the <a href="https://go.soundinfluencers.com/account/client/ongoing-promos">"Ongoing Promo"</a>  section in the homepage in <a href="https://go.soundinfluencers.com">go.soundinfluencers.com</a></p><br/>
+          <p>Best regards,
+          SoundInfluencers Team</p>`,
+                    "pdf",
+                    path as string
+                );
+            })
+                .catch((error) => {
+                    console.error("Error creating PDF:", error);
+                });
+            return {
+                code: 201,
+                message: "ok",
+            };
+        } catch (err) {
+            console.log(err);
+
+            return {
+                code: 500,
+                message: err,
+            };
+        }
+    }
 
     async adminGetAllPromos() {
         try {
-            const promos = await this.promosModel.find().sort({createdAt: -1}).lean().exec();
+            const promos = await this.promosModel.find().sort({ createdAt: -1 }).lean().exec();
 
             if (!promos || promos.length === 0) {
                 return {
@@ -596,11 +694,41 @@ export class AdminService {
                 };
             }
 
+            const result = await Promise.all(promos.map(async (promo) => {
+                let totalFollowers = 0;
+
+                if (Array.isArray(promo.selectInfluencers)) {
+                    const influencersInstagramUsernames = promo.selectInfluencers.map((influencer) => influencer.instagramUsername);
+
+                    const influencers = await this.influencerModel.find({
+                        'instagram.instagramUsername': { $in: influencersInstagramUsernames }
+                    }).lean().exec();
+
+
+                    promo.selectInfluencers.forEach((promoInfluencer) => {
+                        const influencer = influencers.find(inf =>
+                            inf.instagram.some(insta => insta.instagramUsername === promoInfluencer.instagramUsername)
+                        );
+                        if (influencer) {
+                            const insta = influencer.instagram.find(instaAccount => instaAccount.instagramUsername === promoInfluencer.instagramUsername);
+                            if (insta) {
+                                const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
+                                totalFollowers += parseInt(followersCount, 10);
+                            }
+                        }
+                    });
+                }
+
+                return {
+                    ...promo,
+                    totalFollowers
+                };
+            }));
+
             return {
                 status: 200,
-                data: promos,
+                data: result,
             };
-
         } catch (err) {
             console.error('Error occurred:', err);
             return {
