@@ -118,6 +118,9 @@ export class Promos {
   @Prop({ default: 'wait' })
   verifyPromo: string;
 
+  @Prop({required: false, default: ''})
+  replacementsNotes: string;
+  
   @Prop()
   createdAt: Date;
 }

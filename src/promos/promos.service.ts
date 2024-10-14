@@ -52,6 +52,7 @@ export class PromosService {
                 paymentStatus: "wait",
                 statusPromo: "wait",
                 verifyPromo: "wait",
+                
             });
 
             const dataClient = await this.clientModel.findOne({ _id: data.userId });

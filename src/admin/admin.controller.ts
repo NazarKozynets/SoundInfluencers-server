@@ -18,6 +18,7 @@ import {AdminUpdateInfluencerPersonalDto} from "./dto/admin-update-influencer-pe
 import {AdminUpdateInfluencerInstagramDto} from "./dto/admin-update-influencer-instagram.dto";
 import {AdminUpdateInfluencerInvoiceDto} from "./dto/admin-update-influencer-invoice.dto";
 import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update";
+import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -87,6 +88,21 @@ export class AdminController {
     @Get('promos/getAll')
     adminGetAllPromos() {
         return this.adminService.adminGetAllPromos();
+    }
+    
+    @Get('promos/getOne/:id')
+    adminGetOnePromo(@Param('id') id: string) {
+        return this.adminService.adminGetOnePromo(id);
+    }
+    
+    @Put('promos/update')
+    adminUpdatePromo(@Body() data: AdminUpdatePromoDto) {
+        return this.adminService.adminUpdatePromo(data);
+    }
+    
+    @Post('promos/send-public-link/:userId/:publicLink')
+    adminSendCampaignPublicLinkToClient(@Param('userId') userId: string, @Param('publicLink') publicLink: string) {
+        return this.adminService.adminSendCampaignPublicLinkToClient(userId, publicLink);
     }
     
     @Post('send-invoice-client')

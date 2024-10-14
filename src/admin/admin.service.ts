@@ -14,6 +14,7 @@ import {Payment} from "../payment/schemas/payment.entity";
 import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update";
 import {UpdatePhoneClientDto} from "../profile/dto/update-phone-client.dto";
 import sendMail from "../utils/sendMail";
+import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -685,7 +686,7 @@ export class AdminService {
 
     async adminGetAllPromos() {
         try {
-            const promos = await this.promosModel.find().sort({ createdAt: -1 }).lean().exec();
+            const promos = await this.promosModel.find().sort({createdAt: -1}).lean().exec();
 
             if (!promos || promos.length === 0) {
                 return {
@@ -696,24 +697,37 @@ export class AdminService {
 
             const result = await Promise.all(promos.map(async (promo) => {
                 let totalFollowers = 0;
+                let totalRefusedPrice = 0;
 
                 if (Array.isArray(promo.selectInfluencers)) {
-                    const influencersInstagramUsernames = promo.selectInfluencers.map((influencer) => influencer.instagramUsername);
+                    const influencersInstagramUsernames = promo.selectInfluencers.map(influencer => influencer.instagramUsername);
 
                     const influencers = await this.influencerModel.find({
-                        'instagram.instagramUsername': { $in: influencersInstagramUsernames }
+                        'instagram.instagramUsername': {$in: influencersInstagramUsernames}
                     }).lean().exec();
 
-
-                    promo.selectInfluencers.forEach((promoInfluencer) => {
+                    promo.selectInfluencers.forEach(promoInfluencer => {
                         const influencer = influencers.find(inf =>
                             inf.instagram.some(insta => insta.instagramUsername === promoInfluencer.instagramUsername)
                         );
+
                         if (influencer) {
                             const insta = influencer.instagram.find(instaAccount => instaAccount.instagramUsername === promoInfluencer.instagramUsername);
+
                             if (insta) {
                                 const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
                                 totalFollowers += parseInt(followersCount, 10);
+
+                                if (promoInfluencer.confirmation === 'refusing') {
+                                    let influencerPrice: string | number = insta.price;
+
+                                    if (typeof influencerPrice === 'string') {
+                                        influencerPrice = parseFloat(influencerPrice.replace(/[^\d.-]/g, ''));
+                                    }
+
+                                    totalRefusedPrice += influencerPrice * 2;
+                                }
+
                             }
                         }
                     });
@@ -721,7 +735,8 @@ export class AdminService {
 
                 return {
                     ...promo,
-                    totalFollowers
+                    totalFollowers,
+                    partialRefund: totalRefusedPrice > 0 ? totalRefusedPrice : 0,
                 };
             }));
 
@@ -735,6 +750,133 @@ export class AdminService {
                 status: 500,
                 message: err.message || 'An unknown error occurred',
             };
+        }
+    }
+
+    async adminSendCampaignPublicLinkToClient(userId: string, publicLink: string) {
+        try {
+            const user = await this.clientModel.findOne({_id: userId}).lean().exec();
+            if (!user) {
+                return {
+                    status: 404,
+                    message: 'User not found',
+                };
+            }
+            
+            const emailToSend = user.email;
+            await sendMail(
+                emailToSend,
+                "Campaign Public Link",
+                `Hello,
+            Here is the public link to campaign: ${publicLink},
+            Best regards,
+            SoundInfluencers Team`,
+            );
+            return {
+                code: 201,
+                message: "ok",
+            };
+        } catch (err) {
+            console.log(err);
+
+            return {
+                code: 500,
+                message: err,
+            };
+        }
+    }
+
+    async adminGetOnePromo(promoId: string) {
+        try {
+            const promo: any = await this.promosModel.findOne({_id: promoId}).lean().exec(); // Используем any
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            let totalFollowers = 0;
+
+            if (Array.isArray(promo.selectInfluencers)) {
+                const influencersInstagramUsernames = promo.selectInfluencers.map(influencer => influencer.instagramUsername);
+
+                const influencers = await this.influencerModel.find({
+                    'instagram.instagramUsername': {$in: influencersInstagramUsernames}
+                }).lean().exec();
+
+                promo.selectInfluencers.forEach((promoInfluencer: any) => { // Используем any
+                    const influencer = influencers.find(inf =>
+                        inf.instagram.some(insta => insta.instagramUsername === promoInfluencer.instagramUsername)
+                    );
+
+                    if (influencer) {
+                        const insta = influencer.instagram.find(instaAccount => instaAccount.instagramUsername === promoInfluencer.instagramUsername);
+
+                        if (insta) {
+                            const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
+                            promoInfluencer.followersCount = parseInt(followersCount, 10); 
+                            totalFollowers += promoInfluencer.followersCount; 
+                        } else {
+                            promoInfluencer.followersCount = 0; 
+                        }
+                    } else {
+                        promoInfluencer.followersCount = 0; 
+                    }
+                });
+            }
+
+            return {
+                status: 200,
+                data: {
+                    ...promo,
+                    totalFollowers,
+                },
+            };
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            };
+        }
+    }
+    
+    async adminUpdatePromo(data: AdminUpdatePromoDto) {
+        try {
+            if (!data) {
+                return {
+                    status: 400,
+                    message: 'Not enough arguments',
+                };
+            }
+
+            const checkPromo = await this.promosModel.findOne({_id: data._id});
+
+            if (!checkPromo) {
+                return {
+                    code: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            await this.promosModel.findOneAndUpdate(
+                {_id: data._id},
+                {
+                    ...data
+                },
+            );
+
+            return {
+                code: 200,
+                message: 'Promo update',
+            };
+
+        } catch (err) {
+            return {
+                status: 500,
+                message: err,
+            }
         }
     }
 }
