@@ -1294,7 +1294,10 @@ ${influencerVideos.map((video, index) => `
                 };
             }
 
-            const promo = await this.promosModel.findById(promoId);
+            const promo = await this.promosModel.
+            findById(promoId).
+            lean().
+            exec();
 
             if (!promo) {
                 return {
@@ -1303,9 +1306,36 @@ ${influencerVideos.map((video, index) => `
                 };
             }
 
+            const selectInfluencersWithDetails = await Promise.all(
+                promo.selectInfluencers.map(async (influencerItem) => {
+                    const influencerData = await this.influencerModel.findById(influencerItem.influencerId);
+
+                    if (!influencerData) {
+                        return {
+                            ...influencerItem,
+                            firstName: "",
+                            followersNumber: null,
+                        };
+                    }
+
+                    const instagramAccount = influencerData.instagram.find(
+                        (insta) => insta.instagramUsername === influencerItem.instagramUsername
+                    );
+
+                    return {
+                        ...influencerItem,
+                        firstName: influencerData.firstName,
+                        followersNumber: instagramAccount ? instagramAccount.followersNumber : null,
+                    };
+                })
+            );
+
             return {
                 code: 200,
-                promo,
+                promo: {
+                    ...promo,
+                    selectInfluencers: selectInfluencersWithDetails,
+                }
             };
         } catch (err) {
             console.error('Error fetching promo by public share link:', err);

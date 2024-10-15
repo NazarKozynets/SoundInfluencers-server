@@ -17,6 +17,7 @@ import sendMail from "../utils/sendMail";
 import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
 import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
 import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
+import {AdminAddInfluencerToCampaignDto} from "./dto/admin-add-influencer-to-campaign.dto";
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -843,7 +844,7 @@ export class AdminService {
 
     async adminGetOnePromo(promoId: string) {
         try {
-            const promo: any = await this.promosModel.findOne({_id: promoId}).lean().exec(); // Используем any
+            const promo: any = await this.promosModel.findOne({_id: promoId}).lean().exec(); 
 
             if (!promo) {
                 return {
@@ -1075,6 +1076,142 @@ export class AdminService {
             return {
                 status: 500,
                 message: err.message || 'An error occurred while removing the influencer from the promo',
+            };
+        }
+    }
+    
+    async adminAddInfluencerToPromo(data: AdminAddInfluencerToCampaignDto) {
+        try {
+            const promo = await this.promosModel.findOne({ _id: data._id });
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            const influencer = await this.influencerModel.findOne({ _id: data.influencerId });
+            
+            if (!influencer) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found',
+                };
+            }
+
+            const existingInfluencer = promo.selectInfluencers.find(
+                (influencer) => influencer.instagramUsername === data.instagramUsername
+            );
+
+            if (existingInfluencer) {
+                return {
+                    status: 400,
+                    message: 'Influencer already added to promo',
+                };
+            }
+            
+            promo.selectInfluencers.push({
+                _id: new Types.ObjectId().toString(),
+                influencerId: data.influencerId,
+                amount: data.amount,
+                instagramUsername: data.instagramUsername,
+                confirmation: 'wait',
+                selectedVideo: data.selectedVideo,
+                dateRequest: data.dateRequest,
+                closePromo: 'wait',
+                brand: '',
+                datePost: '',
+                caption: '',
+                video: '',
+                postLink: '',
+                screenshot: '',
+                impressions: '',
+                reach: '',
+                like: '',
+                invoice: '',
+            });
+            
+            await promo.save();
+            
+            return {
+                status: 200,
+                message: 'Influencer added to promo successfully',
+            };
+        } catch (err) {
+            console.error('Error adding influencer to promo:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while adding the influencer to the promo',
+            };
+        }
+    }
+    
+    async adminAddInfluencerToTempList(promoId: string, instagramUsername: string) {
+        try {
+            const promo = await this.promosModel.findOne({ _id: promoId });
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            const influencer = await this.influencerModel.findOne({ 'instagram.instagramUsername': instagramUsername });
+            const instaFollowers = influencer.instagram.find((insta) => insta.instagramUsername === instagramUsername).followersNumber;
+            
+            if (!influencer) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found',
+                };
+            }
+
+            const existingInfluencer = promo.selectInfluencers.find(
+                (influencer) => influencer.instagramUsername === instagramUsername
+            );
+
+            if (existingInfluencer) {
+                return {
+                    status: 400,
+                    message: 'Influencer already added to promo',
+                };
+            }
+
+            const influencerObj = {
+                _id: new Types.ObjectId().toString(),  
+                influencerId: influencer._id.toString(),             
+                amount: 0,                                           
+                instagramUsername: instagramUsername,
+                confirmation: 'wait',
+                selectedVideo: '',                                  
+                dateRequest: '',            
+                closePromo: 'wait',                                 
+                brand: '',                                           
+                datePost: '',                                        
+                caption: '',                                         
+                video: '',                                           
+                postLink: '',                                        
+                screenshot: '',                                      
+                impressions: '',                                     
+                reach: '',                                           
+                like: '',                                            
+                invoice: '',                                         
+            };
+            
+            return {
+                status: 200,
+                data: {
+                    ...influencerObj,
+                    followersCount: instaFollowers,
+                },
+            };
+        } catch (err) {
+            console.error('Error adding influencer to promo:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while adding the influencer to the promo',
             };
         }
     }

@@ -21,6 +21,7 @@ import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update
 import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
 import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
 import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
+import {AdminAddInfluencerToCampaignDto} from "./dto/admin-add-influencer-to-campaign.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -125,5 +126,15 @@ export class AdminController {
     @Put('promos/update/remove-influencer/:promoId/:instagramUsername')
     adminRemoveInfluencerFromPromo(@Param('promoId') promoId: string, @Param('instagramUsername') instagramUsername: string) {
         return this.adminService.adminRemoveInfluencerFromPromo(promoId, instagramUsername);
+    }
+    
+    @Put('promos/update/add-influencer-to-promo')
+    adminAddInfluencerToPromo(@Body() data: AdminAddInfluencerToCampaignDto) {
+        return this.adminService.adminAddInfluencerToPromo(data);
+    }
+
+    @Put('promos/update/add-influencer-to-temp-list/:promoId/:instagramUsername')
+    adminAddInfluencerToTempList(@Param('promoId') promoId: string, @Param('instagramUsername') instagramUsername: string) {
+        return this.adminService.adminAddInfluencerToTempList(promoId, instagramUsername);
     }
 }
