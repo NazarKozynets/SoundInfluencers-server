@@ -90,7 +90,7 @@ export class Promos {
   selectInfluencers: SelectInfluencers[];
 
   @Prop({
-    type: [{ videoLink: String, postDescription: String, storyTag: String, swipeUpLink: String, specialWishes: String }],
+    type: [{ videoLink: String, postDescription: String, storyTag: String, swipeUpLink: String, specialWishes: String, _id: String }],
   })
   videos: Array<{
     videoLink: string;
@@ -98,6 +98,7 @@ export class Promos {
     storyTag: string;
     swipeUpLink: string;
     specialWishes: string;
+    _id: string;
   }>; 
 
   @Prop()

@@ -18,9 +18,9 @@ async function bootstrap() {
         // .addServer('https://api.soundinfluencers.com') // Добавление базового URL
         .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
-    // SwaggerModule.setup('api-nazar', app, document);
-    await app.listen(3001);
+    // SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api-nazar', app, document);
+    await app.listen(3000);
 }
 
 bootstrap();

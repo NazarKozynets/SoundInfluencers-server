@@ -239,17 +239,18 @@ export class AuthService {
             }
 
             const checkInstagram = data.instagram.map((item) => {
-                if (item.musicStyle === 'Other' && item.musicStyleOther) {
-                    return {
-                        ...item,
-                        musicStyle: item.musicStyleOther[0],
-                    };
-                } else {
-                    return {
-                        ...item,
-                        musicStyle: item.musicStyle,
-                    };
-                }
+                const musicStyle = item.musicStyle === 'Other' && item.musicStyleOther
+                    ? item.musicStyleOther[0]
+                    : item.musicStyle;
+
+                const sanitizedPrice = parseFloat(item.price.replace(/[^\d.-]/g, '')) || 0;
+                const publicPrice = (sanitizedPrice * 2).toString(); 
+
+                return {
+                    ...item,
+                    musicStyle: musicStyle,
+                    publicPrice: publicPrice, 
+                };
             });
 
             const newUser = await this.influencerModel.create({
@@ -257,6 +258,7 @@ export class AuthService {
                 instagram: checkInstagram,
                 password: bcrypt.hashSync(data.password),
             });
+
 
             const generateVerifyId = generateRandomString();
 

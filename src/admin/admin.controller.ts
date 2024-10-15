@@ -19,6 +19,8 @@ import {AdminUpdateInfluencerInstagramDto} from "./dto/admin-update-influencer-i
 import {AdminUpdateInfluencerInvoiceDto} from "./dto/admin-update-influencer-invoice.dto";
 import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update";
 import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
+import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
+import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -108,5 +110,20 @@ export class AdminController {
     @Post('send-invoice-client')
     adminSendNewInvoiceToClient(@Body() data: any) {
         return this.adminService.adminSendNewInvoiceToClient(data);
+    }
+    
+    @Put('promos/update/video')
+    adminUpdatePromoVideo(@Body() data: AdminUpdatePromoVideoDto) {
+        return this.adminService.adminUpdatePromoVideo(data);
+    }
+    
+    @Put('promos/update/influencers-list')
+    adminUpdateInfluencersListPromo(@Body() data: AdminUpdatePromoInfluencersDto) {
+        return this.adminService.adminUpdateInfluencersListPromo(data);
+    }
+    
+    @Put('promos/update/remove-influencer/:promoId/:instagramUsername')
+    adminRemoveInfluencerFromPromo(@Param('promoId') promoId: string, @Param('instagramUsername') instagramUsername: string) {
+        return this.adminService.adminRemoveInfluencerFromPromo(promoId, instagramUsername);
     }
 }

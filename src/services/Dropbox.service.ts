@@ -9,15 +9,12 @@ export class DropboxService {
   private refreshToken: string;
 
   constructor() {
-    this.accessToken =
-      "sl.Bv-E_guOgtiQn6FLji8xFpO73nVz9krnIfrSnW5OU2hS3Qlw3vzExkPZlbkIgDRH8lLDILFp-6X3ptcMVr4096ED0pmPH7cP-02p9DCe0I1lvQ9MqiLdUxk8ToTl48Kpdg8sx01tEjO1WTRYoPw5";
-    this.refreshToken =
-      "QydSschJ_vMAAAAAAAAAAUH0fIuNzZ9ExG5TwzqHpa4bgiAUcJkXCf9ouONt5bSE";
+    this.accessToken = "sl.B-ucodXvHPOp5y8kIGneeEypJXP8PRWI51hPTAuO_9CUi2KuARIsmd2zfGbe6f2F9Q_-xTAWt6nOpj3pLekFlm6hKHcHkN6Okapi0xM5Ynp-aX6cuirywobFbTOwGaImuOms8znfkcGMrYBCmslT";  // Новый access token
+    this.refreshToken = "QydSschJ_vMAAAAAAAAAAUH0fIuNzZ9ExG5TwzqHpa4bgiAUcJkXCf9ouONt5bSE";
     this.dbx = new Dropbox({
       clientId: "rnxlin8iqwjihu7",
       clientSecret: "drq6feze89b0j33",
-      refreshToken:
-        "QydSschJ_vMAAAAAAAAAAUH0fIuNzZ9ExG5TwzqHpa4bgiAUcJkXCf9ouONt5bSE",
+      refreshToken: this.refreshToken,
     });
     this.dbxAuth = new DropboxAuth({
       accessToken: this.accessToken,

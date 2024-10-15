@@ -1,7 +1,7 @@
 import {Injectable} from "@nestjs/common";
 import {InjectModel} from "@nestjs/mongoose";
 import {Promos} from "../promos/schemas/promo.schema";
-import mongoose from "mongoose";
+import mongoose, {Types} from "mongoose";
 import {Client} from "../auth/schemas/client.schema";
 import {Influencer} from "../auth/schemas/influencer.schema";
 import {Offers} from "../promos/schemas/offers.schema";
@@ -15,6 +15,8 @@ import {AdminUpdateClientPayment} from "./dto/admin-update-client-payment.update
 import {UpdatePhoneClientDto} from "../profile/dto/update-phone-client.dto";
 import sendMail from "../utils/sendMail";
 import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
+import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
+import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -199,23 +201,35 @@ export class AdminService {
             const influencerAvatars = {};
 
             influencers.forEach((influencer) => {
-                influencer.instagram.forEach((insta) => {
-                    influencerAvatars[influencer._id] = influencerAvatars[influencer._id] || {};
-                    influencerAvatars[influencer._id][insta.instagramUsername] = insta.logo;
-                });
+                try {
+                    influencer.instagram.forEach((insta) => {
+                        const username = String(insta.instagramUsername).trim();
+                        if (username && this.isValidUTF8(username)) {
+                            influencerAvatars[influencer._id] = influencerAvatars[influencer._id] || {};
+                            influencerAvatars[influencer._id][username] = insta.logo;
+                        }
+                    });
+                } catch (err) {
+                    console.warn(`Skipping influencer ${influencer._id} due to error:`, err);
+                }
             });
 
-            const invoicePromises = influencers.map(influencer =>
-                this.invoicesModel.findOne({influencerId: influencer._id})
-                    .sort({createdAt: -1})
-                    .lean()
-                    .exec()
-            );
+            const invoicePromises = influencers.map(async influencer => {
+                try {
+                    return await this.invoicesModel.findOne({influencerId: influencer._id})
+                        .sort({createdAt: -1})
+                        .lean()
+                        .exec();
+                } catch (err) {
+                    console.warn(`Error fetching invoice for influencer ${influencer._id}:`, err);
+                    return null; // Возвращаем null в случае ошибки
+                }
+            });
 
-            const promoPromises = influencers.flatMap(influencer =>
-                influencer.instagram.map(insta => {
-                    return Promise.all([
-                        this.promosModel.countDocuments({
+            const promoPromises = influencers.flatMap(influencer => {
+                return influencer.instagram.map(async insta => {
+                    try {
+                        const completed = await this.promosModel.countDocuments({
                             selectInfluencers: {
                                 $elemMatch: {
                                     instagramUsername: insta.instagramUsername,
@@ -223,56 +237,70 @@ export class AdminService {
                                     closePromo: 'close'
                                 }
                             }
-                        }).exec(),
-                        this.promosModel.countDocuments({
+                        }).exec();
+
+                        const denied = await this.promosModel.countDocuments({
                             selectInfluencers: {
                                 $elemMatch: {
                                     instagramUsername: insta.instagramUsername,
                                     confirmation: {$ne: 'accept'}
                                 }
                             }
-                        }).exec()
-                    ]).then(([campaignsCompleted, campaignsDenied]) => ({
-                        instagramUsername: insta.instagramUsername,
-                        campaignsCompleted,
-                        campaignsDenied
-                    }));
-                })
-            );
+                        }).exec();
 
-            const [latestInvoices, promoData] = await Promise.all([Promise.all(invoicePromises), Promise.all(promoPromises)]);
+                        return {
+                            instagramUsername: insta.instagramUsername,
+                            campaignsCompleted: completed,
+                            campaignsDenied: denied
+                        };
+                    } catch (err) {
+                        console.warn(`Error fetching promo data for ${insta.instagramUsername}:`, err);
+                        return null; // Возвращаем null в случае ошибки
+                    }
+                });
+            });
 
+            const latestInvoices = await Promise.all(invoicePromises);
+            const promoData = await Promise.all(promoPromises);
+
+            // Фильтруем null значения
             const invoiceMap = latestInvoices.reduce((acc, invoice) => {
                 if (invoice) {
-                    acc[invoice.influencerId] = invoice; // Используем createdAt для получения даты
+                    acc[invoice.influencerId] = invoice;
                 }
                 return acc;
             }, {});
 
             const promoMap = promoData.reduce((acc, promo) => {
-                acc[promo.instagramUsername] = {
-                    campaignsCompleted: promo.campaignsCompleted,
-                    campaignsDenied: promo.campaignsDenied
-                };
+                if (promo) {
+                    acc[promo.instagramUsername] = {
+                        campaignsCompleted: promo.campaignsCompleted,
+                        campaignsDenied: promo.campaignsDenied
+                    };
+                }
                 return acc;
             }, {});
 
             influencers.forEach((influencer) => {
-                influencer.instagram.forEach((insta) => {
-                    instagrams.push({
-                        instagram: insta,
-                        influencerId: influencer._id,
-                        firstName: influencer.firstName,
-                        phone: influencer.phone,
-                        balance: influencer.balance,
-                        email: influencer.email,
-                        avatar: influencerAvatars[influencer._id][insta.instagramUsername],
-                        internalNote: influencer.internalNote,
-                        latestInvoice: invoiceMap[influencer._id] || "No Invoice",
-                        campaignsCompleted: promoMap[insta.instagramUsername]?.campaignsCompleted || 0,
-                        campaignsDenied: promoMap[insta.instagramUsername]?.campaignsDenied || 0,
+                try {
+                    influencer.instagram.forEach((insta) => {
+                        instagrams.push({
+                            instagram: insta,
+                            influencerId: influencer._id,
+                            firstName: influencer.firstName,
+                            phone: influencer.phone,
+                            balance: influencer.balance,
+                            email: influencer.email,
+                            avatar: influencerAvatars[influencer._id][insta.instagramUsername],
+                            internalNote: influencer.internalNote,
+                            latestInvoice: invoiceMap[influencer._id] || "No Invoice",
+                            campaignsCompleted: promoMap[insta.instagramUsername]?.campaignsCompleted || 0,
+                            campaignsDenied: promoMap[insta.instagramUsername]?.campaignsDenied || 0,
+                        });
                     });
-                });
+                } catch (err) {
+                    console.warn(`Skipping influencer ${influencer._id} during final processing:`, err);
+                }
             });
 
             return {
@@ -286,6 +314,15 @@ export class AdminService {
                 status: 500,
                 message: err.message || 'An unknown error occurred',
             };
+        }
+    }
+
+    async isValidUTF8(str) {
+        try {
+            decodeURIComponent(escape(str));
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 
@@ -361,12 +398,11 @@ export class AdminService {
                     $set: {
                         'instagram.$.instagramLink': data.instagramLink,
                         'instagram.$.followersNumber': data.followersNumber,
-                        'instagram.$.price': data.price
+                        'instagram.$.price': data.price,
+                        'instagram.$.publicPrice': data.publicPrice,
                     }
                 },
             );
-
-
         } catch (err) {
             return {
                 status: 500,
@@ -403,6 +439,7 @@ export class AdminService {
                     instagramLink: instagram.instagramLink,
                     followersNumber: instagram.followersNumber,
                     price: instagram.price,
+                    publicPrice: instagram.publicPrice,
                     logo: instagram.logo,
                     musicStyle: instagram.musicStyle,
                     musicSubStyles: instagram.musicSubStyles,
@@ -447,9 +484,27 @@ export class AdminService {
                 };
             }
 
+            const validInvoices = invoices.filter(invoice => {
+                try {
+                    return Object.values(invoice).every(value =>
+                        typeof value !== 'string' || this.isValidUTF8(value)
+                    );
+                } catch (err) {
+                    console.warn(`Skipping invoice due to error:`, err);
+                    return false;
+                }
+            });
+
+            if (validInvoices.length === 0) {
+                return {
+                    status: 404,
+                    message: 'No valid invoices found',
+                };
+            }
+
             return {
                 status: 200,
-                data: invoices,
+                data: validInvoices,
             };
 
         } catch (err) {
@@ -762,7 +817,7 @@ export class AdminService {
                     message: 'User not found',
                 };
             }
-            
+
             const emailToSend = user.email;
             await sendMail(
                 emailToSend,
@@ -816,13 +871,13 @@ export class AdminService {
 
                         if (insta) {
                             const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
-                            promoInfluencer.followersCount = parseInt(followersCount, 10); 
-                            totalFollowers += promoInfluencer.followersCount; 
+                            promoInfluencer.followersCount = parseInt(followersCount, 10);
+                            totalFollowers += promoInfluencer.followersCount;
                         } else {
-                            promoInfluencer.followersCount = 0; 
+                            promoInfluencer.followersCount = 0;
                         }
                     } else {
-                        promoInfluencer.followersCount = 0; 
+                        promoInfluencer.followersCount = 0;
                     }
                 });
             }
@@ -841,7 +896,7 @@ export class AdminService {
             };
         }
     }
-    
+
     async adminUpdatePromo(data: AdminUpdatePromoDto) {
         try {
             if (!data) {
@@ -877,6 +932,150 @@ export class AdminService {
                 status: 500,
                 message: err,
             }
+        }
+    }
+
+    async adminUpdatePromoVideo(data: AdminUpdatePromoVideoDto) {
+        try {
+            const promo = await this.promosModel.findOne({_id: data._id});
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            if (data.newVideoLink) {
+                const influencer = promo.selectInfluencers.find((influencer) => influencer.selectedVideo === data.oldVideoLink);
+
+                if (!influencer) {
+                    return {
+                        status: 404,
+                        message: 'Influencer not found',
+                    };
+                }
+
+                if (influencer) {
+                    influencer.selectedVideo = data.newVideoLink;
+                }
+            }
+
+            const video = promo.videos.find((video) => video._id === data.videoId);
+
+            if (video) {
+                if (data.newVideoLink) {
+                    video.videoLink = data.newVideoLink;
+                }
+                video.postDescription = data.postDescription;
+                video.storyTag = data.storyTag;
+                video.swipeUpLink = data.swipeUpLink;
+                video.specialWishes = data.specialWishes;
+            }
+
+            await promo.save();
+
+            return {
+                status: 200,
+                message: 'Promo video updated',
+            };
+        } catch (err) {
+            console.error('Error updating promo video:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while updating the promo video',
+            };
+        }
+    }
+
+    async adminUpdateInfluencersListPromo(data: AdminUpdatePromoInfluencersDto) {
+        try {
+            const promo = await this.promosModel.findOne({ _id: data.promoId });
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            const influencerIndex = promo.selectInfluencers.findIndex(
+                (influencer) => influencer.instagramUsername === data.instagramUsername
+            );
+
+            if (influencerIndex === -1) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found in promo',
+                };
+            }
+
+            if (data.datePost) {
+                promo.selectInfluencers[influencerIndex].datePost = data.datePost;
+            }
+            if (data.impressions) {
+                promo.selectInfluencers[influencerIndex].impressions = data.impressions;
+            }
+            if (data.like) {
+                promo.selectInfluencers[influencerIndex].like = data.like;
+            }
+            if (data.screenshot) {
+                promo.selectInfluencers[influencerIndex].screenshot = data.screenshot;
+            }
+            if (data.postLink) {
+                promo.selectInfluencers[influencerIndex].postLink = data.postLink;
+            }
+
+            await promo.save();
+
+            return {
+                status: 200,
+                message: 'Influencer data updated successfully',
+            };
+        } catch (err) {
+            console.error('Error updating promo influencers:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while updating the promo influencers',
+            };
+        }
+    }
+    
+    async adminRemoveInfluencerFromPromo(promoId: string, instagramUsername: string) {
+        try {
+            const promo = await this.promosModel.findOne({ _id: promoId });
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            const influencerIndex = promo.selectInfluencers.findIndex(
+                (influencer) => influencer.instagramUsername === instagramUsername
+            );
+
+            if (influencerIndex === -1) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found in promo',
+                };
+            }
+
+            promo.selectInfluencers.splice(influencerIndex, 1);
+
+            await promo.save();
+
+            return {
+                status: 200,
+                message: 'Influencer removed from promo successfully',
+            };
+        } catch (err) {
+            console.error('Error removing influencer from promo:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while removing the influencer from the promo',
+            };
         }
     }
 }

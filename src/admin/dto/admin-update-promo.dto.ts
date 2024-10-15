@@ -12,4 +12,10 @@ export class AdminUpdatePromoDto {
     
     @ApiProperty({required: false})
     partialRefund: number;
+    
+    @ApiProperty({required: false})
+    campaignName: string;
+    
+    @ApiProperty({required: false})
+    amount: number;
 }

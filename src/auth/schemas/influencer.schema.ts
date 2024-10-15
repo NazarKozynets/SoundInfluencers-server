@@ -10,6 +10,7 @@ interface typesInstagram {
     followersNumber: string;
     logo: string;
     price: string;
+    publicPrice: string;
     countries: { country: string; percentage: number }[] | null;
     categories: string[] | null;
 }
@@ -23,6 +24,7 @@ const typesInstagramApi = {
     followersNumber: String,
     logo: String,
     price: String,
+    publicPrice: String,
     countries: [
         {
             country: String,

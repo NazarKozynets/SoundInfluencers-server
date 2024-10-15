@@ -18,4 +18,7 @@ export class AdminUpdateInfluencerInstagramDto {
     
     @ApiProperty({required: false})
     price: string;
+    
+    @ApiProperty({required: false})
+    publicPrice: string;
 }
