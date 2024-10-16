@@ -9,7 +9,7 @@ export class Client {
     @Prop()
     firstName: string;
     @Prop()
-    balance: string;
+    balance: number;
 
     @Prop()
     company: string;

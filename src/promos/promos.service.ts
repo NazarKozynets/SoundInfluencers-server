@@ -880,7 +880,11 @@ ${influencerVideos.map((video, index) => `
                     updateNewPromo,
                 };
             } else {
-                const updateNewPromo = await this.promosModel.findOneAndUpdate(
+                const influencer = await this.influencerModel.findById(influencerId);
+                const instagram = influencer.instagram.find(instagram => instagram.instagramUsername === instagramUsername);
+                const price = instagram.publicPrice;
+
+                const updatePromo = await this.promosModel.findOneAndUpdate(
                     {
                         _id: promoId,
                         selectInfluencers: {
@@ -893,9 +897,10 @@ ${influencerVideos.map((video, index) => `
                     {
                         $set: {
                             "selectInfluencers.$.confirmation": promoResponse,
+                            partialRefund: findNewPromo.partialRefund + price,
                         },
                     },
-                    {new: true}
+                    { new: true }
                 );
 
                 const checkUserInfluencer = await this.influencerModel.findById(influencerId);
@@ -917,7 +922,7 @@ ${influencerVideos.map((video, index) => `
 
                 return {
                     code: 200,
-                    updateNewPromo,
+                    updatePromo,
                 };
             }
         } catch (err) {

@@ -122,6 +122,9 @@ export class Promos {
   @Prop({required: false, default: ''})
   replacementsNotes: string;
   
+  @Prop({required: false, default: 0})
+  partialRefund: number;
+  
   @Prop()
   createdAt: Date;
 }

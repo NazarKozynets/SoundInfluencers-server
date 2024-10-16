@@ -22,6 +22,7 @@ import {AdminUpdatePromoDto} from "./dto/admin-update-promo.dto";
 import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
 import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
 import {AdminAddInfluencerToCampaignDto} from "./dto/admin-add-influencer-to-campaign.dto";
+import {AdminSendEmailToInfluencerDto} from "./dto/admin-send-email-to-influencer.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -136,5 +137,15 @@ export class AdminController {
     @Put('promos/update/add-influencer-to-temp-list/:promoId/:instagramUsername')
     adminAddInfluencerToTempList(@Param('promoId') promoId: string, @Param('instagramUsername') instagramUsername: string) {
         return this.adminService.adminAddInfluencerToTempList(promoId, instagramUsername);
+    }
+    
+    @Post('promos/send-mail-influencer')
+    adminSendEmailToInfluencer(@Body() data: AdminSendEmailToInfluencerDto) {
+        return this.adminService.adminSendEmailToInfluencer(data);
+    }
+    
+    @Put('promos/give-partial-refund/:userId/:partialRefund/:campaignId')
+    adminGivePartialRefundToClient(@Param('userId') userId: string, @Param('partialRefund') partialRefund: number, @Param('campaignId') campaignId: string) {
+        return this.adminService.adminGivePartialRefundToClient(userId, partialRefund, campaignId);
     }
 }

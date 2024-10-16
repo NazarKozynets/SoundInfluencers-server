@@ -110,7 +110,7 @@ export class AuthService {
                 ...data,
                 referenceNumber: generateRandomDigits(6),
                 password: bcrypt.hashSync(data.password),
-                balance: "0",
+                balance: 0,
             });
 
             const generateVerifyId = generateRandomString();
