@@ -8,6 +8,7 @@ import {Offers, OffersSchema} from "../promos/schemas/offers.schema";
 import {AdminController} from "./admin.controller";
 import {Invoices} from "../invoice/schemas/invoices.schema";
 import {Payment} from "../payment/schemas/payment.entity";
+import {OffersTemp, OffersTempSchema} from "./schemas/offers-temp.schema";
 
 @Module({
     imports: [
@@ -18,6 +19,7 @@ import {Payment} from "../payment/schemas/payment.entity";
             {name: Offers.name, schema: OffersSchema},
             {name: Invoices.name, schema: Invoices},
             {name: Payment.name, schema: Payment},
+            {name: OffersTemp.name, schema: OffersTempSchema},
         ]),
     ],
     controllers: [AdminController],

@@ -23,6 +23,8 @@ import {AdminUpdatePromoVideoDto} from "./dto/admin-update-promo-video.dto";
 import {AdminUpdatePromoInfluencersDto} from "./dto/admin-update-promo-influencers.dto";
 import {AdminAddInfluencerToCampaignDto} from "./dto/admin-add-influencer-to-campaign.dto";
 import {AdminSendEmailToInfluencerDto} from "./dto/admin-send-email-to-influencer.dto";
+import {AdminSaveOffersToTempDto} from "./dto/admin-save-offer-to-temp.dto";
+import {AdminPutOfferToOffersDto} from "./dto/admin-put-offer-to-offers.dto";
 
 @Controller('admin')
 export class AdminController {
@@ -147,5 +149,40 @@ export class AdminController {
     @Put('promos/give-partial-refund/:userId/:partialRefund/:campaignId')
     adminGivePartialRefundToClient(@Param('userId') userId: string, @Param('partialRefund') partialRefund: number, @Param('campaignId') campaignId: string) {
         return this.adminService.adminGivePartialRefundToClient(userId, partialRefund, campaignId);
+    }
+    
+    @Get('offers/getAll')
+    adminGetAllOffers() {
+        return this.adminService.adminGetAllOffers();
+    }
+    
+    @Put('offers/delete-and-save-to-temp')
+    adminDeleteOfferAndSaveToTemp(@Body() data: AdminSaveOffersToTempDto) {
+        return this.adminService.adminDeleteOfferAndSaveToTemp(data);
+    }
+    
+    @Put('offers/save-to-temp')
+    adminSaveOffersToTemp(@Body() data: AdminSaveOffersToTempDto) {
+        return this.adminService.adminSaveOffersToTemp(data);
+    }
+    
+    @Put('offers/delete-from-temp/:offerId')
+    adminDeleteOffer(@Param('offerId') offerId: string) {
+        return this.adminService.adminDeleteOffer(offerId);
+    }
+    
+    @Put('offers/return-from-deleted')
+    adminReturnOfferFromDeleted(@Body() data: AdminPutOfferToOffersDto) {
+        return this.adminService.adminReturnOfferFromDeleted(data);
+    }
+    
+    @Put('calculate-balance')
+    adminCalculateBalancesInfluencersFromPromos() {
+        return this.adminService.adminCalculateBalancesInfluencersFromPromos();
+    }
+    
+    @Put('offers/publish')
+    adminPublishOffers() {
+        return this.adminService.adminPublishOffers();
     }
 }
