@@ -13,6 +13,7 @@ interface typesInstagram {
     publicPrice: string;
     countries: { country: string; percentage: number }[] | null;
     categories: string[] | null;
+    isHidden: boolean;
 }
 
 const typesInstagramApi = {
@@ -32,6 +33,7 @@ const typesInstagramApi = {
         },
     ] || null,
     categories: [String] || null,
+    isHidden: Boolean,
 };
 
 @Schema({

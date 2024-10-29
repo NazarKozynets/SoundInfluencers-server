@@ -409,7 +409,8 @@ export class AdminService {
                     musicStyle: instagram.musicStyle,
                     musicSubStyles: instagram.musicSubStyles,
                     countries: instagram.countries,
-                    categories: instagram.categories
+                    categories: instagram.categories,
+                    isHidden: instagram.isHidden,
                 },
                 influencerId: influencer._id,
                 firstName: influencer.firstName,
@@ -1503,4 +1504,77 @@ Soundinfluencers Team
         }
     }
 
+    async adminUpdateOldOffer(data: AdminSaveOffersToTempDto) {
+        try {
+            const offer = await this.offersModel.findOne({_id: data._id});
+
+            if (offer) {
+                await this.offersModel.deleteOne({_id: data._id});
+                await this.offersTempModel.create({...data, isNew: true});
+
+                return {
+                    status: 200,
+                    message: 'Offer updated successfully',
+                };
+            } else {
+                const offerTemp = await this.offersTempModel.findOne({_id: data._id});
+                
+                if (!offerTemp) {
+                    return {
+                        status: 404,
+                        message: 'Offer not found',
+                    };
+                }
+                await this.offersTempModel.updateOne({_id: data._id}, {...data});
+                
+                return {
+                    status: 200,
+                    message: 'Offer updated successfully',
+                };
+            }
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: 'An unknown error occurred',
+            };
+        }
+    }
+    
+    async adminHideInstagramAccount(influencerId, instagramUsername) {
+        try {
+            const influencer = await this.influencerModel.findOne({_id: influencerId});
+
+            if (!influencer) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found',
+                };
+            }
+
+            const instagram = influencer.instagram.find((insta) => insta.instagramUsername === instagramUsername);
+
+            if (!instagram) {
+                return {
+                    status: 404,
+                    message: 'Instagram account not found',
+                };
+            }
+
+            instagram.isHidden = !instagram.isHidden;
+
+            await influencer.save();
+
+            return {
+                status: 200,
+                message: 'Instagram account hidden successfully',
+            };
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: 'An unknown error occurred',
+            };
+        }
+    }
 }

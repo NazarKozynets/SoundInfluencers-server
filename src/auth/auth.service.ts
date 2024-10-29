@@ -250,6 +250,7 @@ export class AuthService {
                     ...item,
                     musicStyle: musicStyle,
                     publicPrice: publicPrice, 
+                    isHidden: false,
                 };
             });
 
@@ -616,7 +617,9 @@ export class AuthService {
 
             const listInstagram = getInfluencersAll.map((item) => {
                 if (!Array.isArray(item.instagram)) return [];
-                return item.instagram.map((itemIns) => ({
+                return item.instagram
+                    .filter((itemIns) => itemIns.isHidden !== true)
+                    .map((itemIns) => ({
                     ...itemIns,
                     _id: item._id,
                 }));

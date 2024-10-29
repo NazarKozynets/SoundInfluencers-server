@@ -185,4 +185,14 @@ export class AdminController {
     adminPublishOffers() {
         return this.adminService.adminPublishOffers();
     }
+    
+    @Put('offers/update')
+    adminUpdateOldOffer(@Body() data: AdminSaveOffersToTempDto) {
+        return this.adminService.adminUpdateOldOffer(data);
+    }
+    
+    @Put('influencer/hide-instagram/:influencerId/:instagramUsername')
+    adminHideInstagramAccount(@Param('influencerId') influencerId: string, @Param('instagramUsername') instagramUsername: string) {
+        return this.adminService.adminHideInstagramAccount(influencerId, instagramUsername);
+    }
 }
