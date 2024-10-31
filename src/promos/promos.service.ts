@@ -311,7 +311,7 @@ ${data.videos.map((video, index) => `
                 {verifyPromo: status}
             );
 
-            if (status === "accept") {
+            if (status === "accept" && checkPromo.statusPromo === "wait") {
                 const checkPromo = await this.promosModel.findById(promoId);
                 const influencersIds = checkPromo.selectInfluencers.map((item) => item.influencerId);
 
