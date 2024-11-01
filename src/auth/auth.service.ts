@@ -269,6 +269,7 @@ export class AuthService {
             });
             // TODO: add another social medias
             await sendMail(
+                // 'nazarkozynets030606@zohomail.eu',
                 'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new partner ${

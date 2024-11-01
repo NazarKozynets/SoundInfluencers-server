@@ -236,7 +236,7 @@ export class AdminService {
                 .sort({ createdAt: -1 })
                 .lean()
                 .exec();
-
+            
             const promoData = await this.promosModel
                 .aggregate([
                     { $unwind: "$selectInfluencers" },
