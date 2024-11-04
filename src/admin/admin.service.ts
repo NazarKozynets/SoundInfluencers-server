@@ -1084,7 +1084,6 @@ export class AdminService {
     async adminAddInfluencerToPromo(data: AdminAddInfluencerToCampaignDto) {
         try {
             const promo = await this.promosModel.findOne({_id: data._id});
-
             if (!promo) {
                 return {
                     status: 404,
@@ -1111,7 +1110,7 @@ export class AdminService {
                     message: 'Influencer already added to promo',
                 };
             }
-
+            
             promo.selectInfluencers.push({
                 _id: new Types.ObjectId().toString(),
                 influencerId: data.influencerId,
@@ -1133,6 +1132,18 @@ export class AdminService {
                 invoice: '',
             });
 
+            if (!promo.videos.some(video => video.videoLink === data.selectedVideo)) {
+                const newVideo = {
+                    _id: new Types.ObjectId().toString(),
+                    videoLink: data.selectedVideo,
+                    postDescription: '',
+                    storyTag: '',
+                    swipeUpLink: '',
+                    specialWishes: '',
+                };
+                promo.videos.push(newVideo);
+            }
+            
             await promo.save();
 
             return {
