@@ -96,6 +96,16 @@ export class AdminController {
         return this.adminService.adminGetAllPromos();
     }
     
+    @Delete('promos/delete/:id')
+    adminDeletePromo(@Param('id') id: string) {
+        return this.adminService.adminDeletePromo(id);
+    }
+    
+    @Put('promos/close-for-influencer/:promoId/:instagramUsername')
+    adminClosePromoForInfluencer(@Param('promoId') promoId: string, @Param('instagramUsername') instagramUsername: string) {
+        return this.adminService.adminClosePromoForInfluencer(promoId, instagramUsername);
+    }
+    
     @Get('promos/getOne/:id')
     adminGetOnePromo(@Param('id') id: string) {
         return this.adminService.adminGetOnePromo(id);

@@ -191,7 +191,7 @@ export class AdminService {
     async adminGetAllInfluencerInstaAccounts() {
         try {
             const influencers = await this.influencerModel
-                .find({ statusVerify: 'accept' })
+                .find({statusVerify: 'accept'})
                 .select(['-password'])
                 .lean()
                 .exec();
@@ -221,9 +221,9 @@ export class AdminService {
                             email: influencer.email,
                             avatar: influencerAvatars[influencer._id][username],
                             internalNote: influencer.internalNote,
-                            latestInvoice: null,   
-                            campaignsCompleted: 0, 
-                            campaignsDenied: 0     
+                            latestInvoice: null,
+                            campaignsCompleted: 0,
+                            campaignsDenied: 0
                         });
                     }
                 });
@@ -232,27 +232,27 @@ export class AdminService {
             const influencerIds = influencers.map((inf) => inf._id);
 
             const latestInvoices = await this.invoicesModel
-                .find({ influencerId: { $in: influencerIds } })
-                .sort({ createdAt: -1 })
+                .find({influencerId: {$in: influencerIds}})
+                .sort({createdAt: -1})
                 .lean()
                 .exec();
-            
+
             const promoData = await this.promosModel
                 .aggregate([
-                    { $unwind: "$selectInfluencers" },
+                    {$unwind: "$selectInfluencers"},
                     {
                         $match: {
-                            "selectInfluencers.instagramUsername": { $in: instagrams.map(insta => insta.instagram.instagramUsername) }
+                            "selectInfluencers.instagramUsername": {$in: instagrams.map(insta => insta.instagram.instagramUsername)}
                         }
                     },
                     {
                         $group: {
                             _id: "$selectInfluencers.instagramUsername",
                             campaignsCompleted: {
-                                $sum: { $cond: [{ $and: [{ $eq: ["$selectInfluencers.confirmation", "accept"] }, { $eq: ["$selectInfluencers.closePromo", "close"] }] }, 1, 0] }
+                                $sum: {$cond: [{$and: [{$eq: ["$selectInfluencers.confirmation", "accept"]}, {$eq: ["$selectInfluencers.closePromo", "close"]}]}, 1, 0]}
                             },
                             campaignsDenied: {
-                                $sum: { $cond: [{ $ne: ["$selectInfluencers.confirmation", "accept"] }, 1, 0] }
+                                $sum: {$cond: [{$ne: ["$selectInfluencers.confirmation", "accept"]}, 1, 0]}
                             }
                         }
                     }
@@ -769,6 +769,110 @@ export class AdminService {
         }
     }
 
+    async adminDeletePromo(promoId: string) {
+        try {
+            const promo = await this.promosModel.findOne({_id: promoId});
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            await this.promosModel.deleteOne({_id: promoId});
+
+            return {
+                status: 200,
+                message: 'Promo deleted successfully',
+            };
+        } catch (err) {
+            console.error('Error deleting promo:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while deleting the promo',
+            };
+        }
+    }
+
+    async adminClosePromoForInfluencer(promoId: string, instagramUsername: string) {
+        try {
+            const promo = await this.promosModel.findOne({ _id: promoId });
+
+            if (!promo) {
+                return {
+                    status: 404,
+                    message: 'Promo not found',
+                };
+            }
+
+            const influencer = promo.selectInfluencers.find(
+                (influencer) => influencer.instagramUsername === instagramUsername
+            );
+
+            if (!influencer) {
+                return {
+                    status: 404,
+                    message: 'Influencer not found in promo',
+                };
+            }
+
+            const influencerAccount = await this.influencerModel
+                .findOne({
+                    'instagram.instagramUsername': instagramUsername
+                })
+                .lean()
+                .exec();
+
+            if (!influencerAccount) {
+                return {
+                    status: 404,
+                    message: 'Influencer account not found',
+                };
+            }
+
+            influencer.closePromo = 'close';
+            await promo.save();
+
+            const price = influencerAccount.instagram.find(
+                (insta) => insta.instagramUsername === instagramUsername
+            )?.price;
+
+            if (!price) {
+                return {
+                    status: 400,
+                    message: 'Price not found for influencer',
+                };
+            }
+
+            let balance = parseInt(influencerAccount.balance.replace('€', '').trim(), 10);
+
+            if (isNaN(balance)) {
+                balance = 0;
+            }
+
+            balance += parseInt(price.replace('€', '').trim(), 10);
+
+            const updatedBalance = `${balance}`;
+
+            await this.influencerModel.findOneAndUpdate(
+                { 'instagram.instagramUsername': instagramUsername },
+                { balance: updatedBalance }
+            );
+
+            return {
+                status: 200,
+                message: 'Promo closed for influencer successfully',
+            };
+        } catch (err) {
+            console.error('Error closing promo for influencer:', err);
+            return {
+                status: 500,
+                message: err.message || 'An error occurred while closing the promo for the influencer',
+            };
+        }
+    }
+
     async adminSendCampaignPublicLinkToClient(userId: string, publicLink: string) {
         try {
             const user = await this.clientModel.findOne({_id: userId}).lean().exec();
@@ -1110,7 +1214,7 @@ export class AdminService {
                     message: 'Influencer already added to promo',
                 };
             }
-            
+
             promo.selectInfluencers.push({
                 _id: new Types.ObjectId().toString(),
                 influencerId: data.influencerId,
@@ -1143,7 +1247,7 @@ export class AdminService {
                 };
                 promo.videos.push(newVideo);
             }
-            
+
             await promo.save();
 
             return {
@@ -1481,7 +1585,7 @@ Soundinfluencers Team
             };
         }
     }
-    
+
     async adminPublishOffers() {
         try {
             const offersTemp = await this.offersTempModel.find({isDeleted: false});
@@ -1501,7 +1605,7 @@ Soundinfluencers Team
                 } else {
                     const newOffer = {
                         ...offer.toObject(),
-                        _id: new Types.ObjectId() 
+                        _id: new Types.ObjectId()
                     };
                     await this.offersModel.create(newOffer);
                 }
@@ -1537,7 +1641,7 @@ Soundinfluencers Team
                 };
             } else {
                 const offerTemp = await this.offersTempModel.findOne({_id: data._id});
-                
+
                 if (!offerTemp) {
                     return {
                         status: 404,
@@ -1545,7 +1649,7 @@ Soundinfluencers Team
                     };
                 }
                 await this.offersTempModel.updateOne({_id: data._id}, {...data});
-                
+
                 return {
                     status: 200,
                     message: 'Offer updated successfully',
@@ -1559,7 +1663,7 @@ Soundinfluencers Team
             };
         }
     }
-    
+
     async adminHideInstagramAccount(influencerId, instagramUsername) {
         try {
             const influencer = await this.influencerModel.findOne({_id: influencerId});
