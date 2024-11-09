@@ -29,6 +29,9 @@ export class OffersTemp {
     @Prop({required: true})
     musicStyles: any[];
     
+    @Prop({required: true})
+    socialMedia: string;
+    
     @Prop({required: true, default: false})
     isDeleted: boolean;  
 

@@ -75,6 +75,12 @@ export class CreateInfluencerDto {
         items: {type: 'object', properties: typesSocialMedia},
     })
     press: ISocial[];
+    
+    @ApiProperty({
+        type: 'array',
+        items: {type: 'object', properties: typesSocialMedia},
+    })
+    youtube: ISocial[];
 
     @ApiProperty()
     email: string;

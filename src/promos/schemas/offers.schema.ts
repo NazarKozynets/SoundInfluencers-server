@@ -44,6 +44,9 @@ export class Offers {
 
     @Prop()
     story: string;
+    
+    @Prop()
+    socialMedia: string;
 
     @Prop({type: [MusicStyleSchemaSchema]})
     musicStyles: MusicStyle[];

@@ -65,7 +65,7 @@ export class PromosService {
 
             const emailContent = `
 <p>Hi,</p>
-<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
+<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers on the ${data.socialMedia}:</p>
 <p><strong>Post Details:</strong></p>
 <p><strong>Campaign Name: ${data.campaignName}</strong></p>
 ${data.videos.map((video, index) => `
@@ -81,7 +81,7 @@ ${data.videos.map((video, index) => `
     <ul>
         ${data.selectInfluencers
                 .filter(influencer => influencer.selectedVideo === video.videoLink)
-                .map(influencer => `<li>Instagram name: ${influencer.instagramUsername}</li>`)
+                .map(influencer => `<li>${data.socialMedia} username: ${influencer.instagramUsername}</li>`)
                 .join('')}
     </ul>
 `).join('')}
@@ -1283,7 +1283,6 @@ ${influencerVideos.map((video, index) => `
     async uploadDropBox(file: any) {
         const dropboxService = new DropboxService();
         const screenshotUrl = await dropboxService.uploadFile(file.buffer, file.originalname);
-        console.log('yes');
         return {
             code: 200,
             data: screenshotUrl,

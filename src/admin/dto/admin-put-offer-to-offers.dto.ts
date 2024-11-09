@@ -28,6 +28,9 @@ export class AdminPutOfferToOffersDto {
     @ApiProperty()
     musicStyles: any[];
     
+    @ApiProperty()
+    socialMedia: string;
+    
     @ApiProperty({required: false})
     wasPublished: boolean;
 }

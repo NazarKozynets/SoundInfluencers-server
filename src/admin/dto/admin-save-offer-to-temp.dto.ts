@@ -27,6 +27,9 @@ export class AdminSaveOffersToTempDto {
 
     @ApiProperty()
     musicStyles: any[]; 
+    
+    @ApiProperty()
+    socialMedia: string;
 
     @ApiProperty({required: true})
     isDeleted: boolean; 
