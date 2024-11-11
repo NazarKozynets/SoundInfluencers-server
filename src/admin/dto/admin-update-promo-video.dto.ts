@@ -24,4 +24,10 @@ export class AdminUpdatePromoVideoDto {
     
     @ApiProperty({required: false, default: ''})
     specialWishes: string;
+    
+    @ApiProperty({required: true})
+    isNewVideo: boolean;
+    
+    @ApiProperty({required: true})
+    selectedInstagramUsername: string;
 }

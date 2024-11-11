@@ -797,7 +797,7 @@ export class AdminService {
 
     async adminClosePromoForInfluencer(promoId: string, instagramUsername: string) {
         try {
-            const promo = await this.promosModel.findOne({ _id: promoId });
+            const promo = await this.promosModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -856,8 +856,8 @@ export class AdminService {
             const updatedBalance = `${balance}`;
 
             await this.influencerModel.findOneAndUpdate(
-                { 'instagram.instagramUsername': instagramUsername },
-                { balance: updatedBalance }
+                {'instagram.instagramUsername': instagramUsername},
+                {balance: updatedBalance}
             );
 
             return {
@@ -1051,8 +1051,10 @@ export class AdminService {
                 };
             }
 
+            const video = promo.videos.find((video) => video._id === data.videoId);
+
             if (data.newVideoLink) {
-                const influencer = promo.selectInfluencers.find((influencer) => influencer.selectedVideo === data.oldVideoLink);
+                const influencer = promo.selectInfluencers.find((influencer) => influencer.instagramUsername === data.selectedInstagramUsername);
 
                 if (!influencer) {
                     return {
@@ -1066,18 +1068,14 @@ export class AdminService {
                 }
             }
 
-            const video = promo.videos.find((video) => video._id === data.videoId);
-
-            if (video) {
-                if (data.newVideoLink) {
-                    video.videoLink = data.newVideoLink;
-                }
-                video.postDescription = data.postDescription;
-                video.storyTag = data.storyTag;
-                video.swipeUpLink = data.swipeUpLink;
-                video.specialWishes = data.specialWishes;
+            if (video && data.newVideoLink && data.isNewVideo) {
+                video.videoLink = data.newVideoLink;
             }
-
+            video.postDescription = data.postDescription;
+            video.storyTag = data.storyTag;
+            video.swipeUpLink = data.swipeUpLink;
+            video.specialWishes = data.specialWishes;
+            
             await promo.save();
 
             return {
