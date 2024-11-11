@@ -561,7 +561,6 @@ export class AuthService {
 
     async getInfluencers(socialMedia: string) {
         try {
-            console.log(socialMedia, 'socialMedia');
             // Получаем всех инфлюенсеров с подтвержденным статусом
             const getInfluencersAll = await this.influencerModel
                 .find({ statusVerify: 'accept' })
