@@ -121,8 +121,8 @@ export class AuthService {
             });
 
             await sendMail(
-                // 'nazarkozynets030606@zohomail.eu',
-                'admin@soundinfluencers.com',
+                'nazarkozynets030606@zohomail.eu',
+                // 'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new client ${data.company}</p><b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
         <p>Company: ${data.company}</p>
@@ -229,8 +229,8 @@ export class AuthService {
 
             // 7. Отправка email-уведомлений
             await sendMail(
-                'nazarkozynets030606@gmail.com',
-                // 'admin@soundinfluencers.com',
+                // 'nazarkozynets030606@gmail.com',
+                'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new partner ${data.firstName}</p>
             <b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
