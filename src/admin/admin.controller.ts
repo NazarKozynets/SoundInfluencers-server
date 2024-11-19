@@ -186,11 +186,6 @@ export class AdminController {
         return this.adminService.adminReturnOfferFromDeleted(data);
     }
     
-    @Put('calculate-balance')
-    adminCalculateBalancesInfluencersFromPromos() {
-        return this.adminService.adminCalculateBalancesInfluencersFromPromos();
-    }
-    
     @Put('offers/publish')
     adminPublishOffers() {
         return this.adminService.adminPublishOffers();

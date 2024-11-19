@@ -121,8 +121,8 @@ export class AuthService {
             });
 
             await sendMail(
-                'nazarkozynets030606@zohomail.eu',
-                // 'admin@soundinfluencers.com',
+                // 'nazarkozynets030606@zohomail.eu',
+                'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new client ${data.company}</p><b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
         <p>Company: ${data.company}</p>
@@ -166,7 +166,6 @@ export class AuthService {
                 return {status: 400, message: 'Not enough arguments'};
             }
 
-            // 1. Проверка существования пользователя по email
             const checkUser = await this.influencerModel.findOne({email: data.email})
                 || await this.clientModel.findOne({email: data.email});
 
@@ -174,10 +173,8 @@ export class AuthService {
                 return {code: 409, message: 'This user already exists'};
             }
 
-            // 2. Подготовка списка всех социальных сетей
             const socialNetworks = ['instagram', 'tiktok', 'spotify', 'soundcloud', 'facebook', 'youtube', 'press'];
 
-            // 3. Проверка уникальных имен пользователей в каждой социальной сети
             for (const network of socialNetworks) {
                 const accounts = data[network] || [];
                 const usernames = accounts.map((item) => item.instagramUsername);
@@ -191,7 +188,6 @@ export class AuthService {
                 }
             }
 
-            // 4. Обработка данных для каждой социальной сети
             const processedData = {};
             for (const network of socialNetworks) {
                 const accounts = data[network] || [];
@@ -213,37 +209,38 @@ export class AuthService {
                 });
             }
 
-            // 5. Создание нового пользователя
             const newUser = await this.influencerModel.create({
                 ...data,
-                ...processedData, // Добавляем все обработанные данные социальных сетей
+                ...processedData, 
                 password: bcrypt.hashSync(data.password),
             });
 
-            // 6. Генерация верификационного ID и создание записи для подтверждения
             const generateVerifyId = generateRandomString();
             await this.verifyInfluencerModel.create({
                 influencerId: newUser._id,
                 verifyId: generateVerifyId,
             });
 
-            // 7. Отправка email-уведомлений
             await sendMail(
                 // 'nazarkozynets030606@gmail.com',
                 'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new partner ${data.firstName}</p>
-            <b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
-            ${socialNetworks.map((network) => data[network]?.map((item, index) => `
-                <p>(${index + 1}) Network: ${network}</p>
-                <p>Music Style: ${item.musicStyle}</p>
-                <p>Username: ${item.instagramUsername}</p>
-                <p>Link: ${item.instagramLink}</p>
-                <p>Followers: ${item.followersNumber}</p>
-                <p>Logo: ${item.logo}</p>
-                <p>Price: ${item.price}</p>`).join('') || '').join('')}
+            <b>Details:</b><br/><p>First Name: ${data.firstName}</p>
             <p>Email: ${data.email}</p>
             <p>Phone: ${data.phone}</p>
+            <br/>
+            ${socialNetworks.map((network) => data[network]?.map((item, index) => `
+                <p><strong>Network: ${network} (${index + 1} account)</strong></p>
+                
+            <ul>
+            <li><strong>Username: ${item.instagramUsername}</strong></li>
+            <li><strong>Link: ${item.instagramLink}</strong></li>
+            <li><strong>Followers: ${item.followersNumber}</strong></li>
+            <li><strong>Logo: ${item.logo}</strong></li>
+            <li><strong>Music Styles: ${item.musicStyle}</strong></li>
+            <li><strong>Price: ${item.price}€</strong></li>
+</ul>`).join('')).join('')}
             <h2>Do you want to verify your account?</h2>
             <a href="${process.env.SERVER}/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=accept">ACCEPT</a>
             <a href="${process.env.SERVER}/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=cancel">CANCEL</a>`,
@@ -559,37 +556,32 @@ export class AuthService {
         }
     }
 
-    async getInfluencers(socialMedia: string) {
+    async getInfluencersWithSocialMedia(socialMedia: string) {
         try {
-            // Получаем всех инфлюенсеров с подтвержденным статусом
             const getInfluencersAll = await this.influencerModel
                 .find({ statusVerify: 'accept' })
                 .select(['-password', '-balance', '-phone', '-email'])
                 .lean()
                 .exec();
 
-            // Обрабатываем данные для заданной социальной сети
             const influencersList = getInfluencersAll.map((item) => {
-                // Проверяем, если поле соцсети существует у инфлюенсера и это массив
                 const socialMediaAccounts = item[socialMedia];
 
-                // Если поле для соцсети существует и это массив, фильтруем скрытые аккаунты
                 if (Array.isArray(socialMediaAccounts)) {
                     return socialMediaAccounts
                         .filter((account) => account.isHidden !== true)
                         .map((account) => ({
                             ...account,
-                            _id: item._id, // Привязываем _id инфлюенсера
+                            _id: item._id, 
                         }));
                 }
 
-                // Если соцсети нет в профиле или это не массив, возвращаем пустой массив
                 return [];
             });
 
             return {
                 code: 200,
-                influencers: influencersList.flat(), // Разворачиваем все вложенные массивы
+                influencers: influencersList.flat(), 
             };
         } catch (err) {
             console.log(err);
@@ -600,6 +592,48 @@ export class AuthService {
         }
     }
 
+    
+    async getInfluencersWithoutSocialMedia() {
+        try {
+            const influencers = await this.influencerModel
+                .find({ statusVerify: 'accept' }) 
+                .select(['-password', '-balance', '-phone', '-email']) 
+                .lean()
+                .exec();
+
+            const allAccounts = influencers.map((influencer) => {
+                const socialMediaKeys = ['instagram', 'tiktok', 'spotify', 'soundcloud', 'facebook', 'youtube', 'press'];
+
+                const accounts = socialMediaKeys.flatMap((socialMedia) => {
+                    const socialMediaAccounts = influencer[socialMedia];
+                    if (Array.isArray(socialMediaAccounts)) {
+                        return socialMediaAccounts
+                            .filter((account) => account.isHidden !== true) 
+                            .map((account) => ({
+                                ...account,
+                                socialMedia, 
+                                _id: influencer._id, 
+                                firstName: influencer.firstName,
+                            }));
+                    }
+                    return [];
+                });
+
+                return accounts;
+            });
+
+            return {
+                code: 200,
+                influencers: allAccounts.flat(),
+            };
+        } catch (err) {
+            console.error(err);
+            return {
+                code: 500,
+                message: err.message || 'An error occurred while fetching all influencer accounts.',
+            };
+        }
+    }
 
     async getClients() {
         try {

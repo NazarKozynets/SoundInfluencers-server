@@ -70,9 +70,13 @@ export class AuthController {
     }
 
     @Get('influencers/:socialMedia')
-    getInfluencers(@Param('socialMedia') socialMedia: string) {
-        console.log(socialMedia);
-        return this.authService.getInfluencers(socialMedia);
+    getInfluencersWithSocialMedia(@Param('socialMedia') socialMedia: string) {
+        return this.authService.getInfluencersWithSocialMedia(socialMedia);
+    }
+    
+    @Get('influencers-all')
+    getInfluencersWithoutSocialMedia() {
+        return this.authService.getInfluencersWithoutSocialMedia();
     }
 
     @Get('clients')

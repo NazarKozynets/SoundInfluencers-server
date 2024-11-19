@@ -56,9 +56,9 @@ export class PromosController {
         return this.promosService.verifyPromo(args.promoId, args.status);
     }
 
-    @Get('offers')
-    getOffers() {
-        return this.promosService.getOffers();
+    @Get('offers/:socialMedia')
+    getOffers(@Param('socialMedia') socialMedia: string) {
+        return this.promosService.getOffers(socialMedia);
     }
 
     @Post('uploadScreenshot')

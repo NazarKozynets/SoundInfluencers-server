@@ -21,6 +21,7 @@ import {AdminSendEmailToInfluencerDto} from "./dto/admin-send-email-to-influence
 import {OffersTemp, OffersTempSchema} from "./schemas/offers-temp.schema";
 import {AdminSaveOffersToTempDto} from "./dto/admin-save-offer-to-temp.dto";
 import {AdminPutOfferToOffersDto} from "./dto/admin-put-offer-to-offers.dto";
+import {PromosService} from "../promos/promos.service";
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -797,7 +798,7 @@ export class AdminService {
 
     async adminClosePromoForInfluencer(promoId: string, instagramUsername: string) {
         try {
-            const promo = await this.promosModel.findOne({ _id: promoId });
+            const promo = await this.promosModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -856,8 +857,8 @@ export class AdminService {
             const updatedBalance = `${balance}`;
 
             await this.influencerModel.findOneAndUpdate(
-                { 'instagram.instagramUsername': instagramUsername },
-                { balance: updatedBalance }
+                {'instagram.instagramUsername': instagramUsername},
+                {balance: updatedBalance}
             );
 
             return {
@@ -1381,18 +1382,27 @@ Soundinfluencers Team
 
     async adminGetAllOffers() {
         try {
-            const offersTemp = await this.offersTempModel.find({});
+            const offersTempPromise = this.offersTempModel.find();
 
-            if (!offersTemp || offersTemp.length === 0) {
-                return {
-                    status: 404,
-                    message: 'No offers found',
-                };
-            }
+            const socialMediaTypes = ["instagram", "tiktok", "facebook", "youtube", "spotify", "soundcloud", "press"];
+            const promosService = new PromosService(this.promosModel, this.clientModel, this.influencerModel, this.offersModel);
+
+            const socialMediaPromises = socialMediaTypes.map(socialMedia => promosService.getOffers(socialMedia));
+            const socialMediaResults = await Promise.all(socialMediaPromises);
+
+            const socialMedias = socialMediaTypes.reduce((acc, socialMedia, index) => {
+                acc[socialMedia] = socialMediaResults[index];
+                return acc;
+            }, {});
+
+            const offersTemp = await offersTempPromise;
 
             return {
                 status: 200,
-                data: offersTemp,
+                data: {
+                    offersTemp,
+                    socialMedias
+                },
             };
         } catch (err) {
             console.error('Error occurred:', err);
@@ -1402,6 +1412,7 @@ Soundinfluencers Team
             };
         }
     }
+
 
     async adminDeleteOfferAndSaveToTemp(data: AdminSaveOffersToTempDto) {
         try {
@@ -1517,66 +1528,6 @@ Soundinfluencers Team
 
                 await this.offersTempModel.updateOne({_id: data._id}, {isDeleted: false});
             }
-        } catch (err) {
-            console.error('Error occurred:', err);
-            return {
-                status: 500,
-                message: 'An unknown error occurred',
-            };
-        }
-    }
-
-    async adminCalculateBalancesInfluencersFromPromos() {
-        try {
-            //нужно достать только промо после 30.10 включительно и verifyPromo accept
-            const promos = await this.promosModel.find({
-                createdAt: {$gte: new Date('2021-10-30T00:00:00.000Z')},
-                verifyPromo: 'accept'
-            });
-
-
-            if (!promos || promos.length === 0) {
-                return {
-                    status: 404,
-                    message: 'No promos found',
-                };
-            }
-
-            // const influencers = await this.influencerModel.find({ statusVerify: 'accept' });
-            //
-            // if (!influencers || influencers.length === 0) {
-            //     return {
-            //         status: 404,
-            //         message: 'No influencers found',
-            //     };
-            // }
-
-            for (const promo of promos) {
-                for (const influencer of promo.selectInfluencers) {
-                    if (influencer.closePromo === 'close') {
-                        const influencerObj = await this.influencerModel.findOne({_id: influencer.influencerId});
-                        const instagramPrice = influencerObj.instagram.find((insta) => insta.instagramUsername === influencer.instagramUsername).price;
-
-                        if (influencerObj) {
-                            await this.influencerModel.findOneAndUpdate(
-                                {_id: influencer.influencerId},
-                                {
-                                    balance: String(
-                                        Number(influencerObj.balance) +
-                                        (+instagramPrice.replace(/[^\d]/g, ""))
-                                    ),
-                                }
-                            );
-                        }
-                    }
-                }
-            }
-
-            console.log('Influencers balances updated successfully');
-            return {
-                status: 200,
-                message: 'Influencers balances updated successfully',
-            };
         } catch (err) {
             console.error('Error occurred:', err);
             return {

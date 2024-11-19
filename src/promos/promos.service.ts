@@ -371,9 +371,11 @@ ${influencerVideos.map((video, index) => `
         }
     }
 
-    async getOffers() {
+    async getOffers(socialMedia: string) {
         try {
-            const offers = await this.offersModel.find({});
+            const offers = await this.offersModel.find({
+                socialMedia
+            });
 
             const offersWithAvatars = await Promise.all(
                 offers.map(async (offer: any) => {
