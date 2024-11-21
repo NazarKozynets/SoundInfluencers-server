@@ -251,10 +251,10 @@ export class AuthService {
                 data.email,
                 'soundinfluencers',
                 `<p>Dear ${data.firstName},</p>
-            <p>Thank you for your subscription request submission.</p>
-            <p>An email with a status update will be sent to you soon.</p>
+            <p>Thank you for submitting your subscription request.</p>
+            <p>We will send you an email with a status update shortly.</p>
             <p>Best regards,</p>
-            <p>SoundInfluencers team</p>`,
+            <p>The SoundInfluencers Team</p>`,
                 'html',
             );
 
