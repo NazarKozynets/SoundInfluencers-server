@@ -221,6 +221,39 @@ export class AuthService {
                 verifyId: generateVerifyId,
             });
 
+            const formatGenres = (item) => {
+                const genresSet = new Set<string>();
+                if (item.musicStyle || item.musicSubStyles || item.musicStyleOther) {
+                    if (item.musicSubStyles?.length > 0) {
+                        for (const subStyle of item.musicSubStyles) {
+                            if (subStyle === "Melodic, Minimal") {
+                                genresSet.add("Techno (Melodic, Minimal)");
+                            }
+                            if (subStyle === "Hard, Peak") {
+                                genresSet.add("Techno (Hard, Peak)");
+                            }
+                            if (subStyle === "Tech House") {
+                                genresSet.add("House (Tech House)");
+                            }
+                            if (subStyle === "Melodic, Afro") {
+                                genresSet.add("House (Melodic, Afro)");
+                            }
+                        }
+                    } else if (item.musicStyle) {
+                        genresSet.add(item.musicStyle);
+                    }
+
+                    if (item.musicStyleOther?.length > 0) {
+                        for (const otherStyle of item.musicStyleOther) {
+                            if (otherStyle !== "House") {
+                                genresSet.add(otherStyle);
+                            }
+                        }
+                    }
+                }
+                return Array.from(genresSet);
+            };
+
             await sendMail(
                 // 'nazarkozynets030606@gmail.com',
                 'admin@soundinfluencers.com',
@@ -238,7 +271,7 @@ export class AuthService {
             <li><strong>Link: ${item.instagramLink}</strong></li>
             <li><strong>Followers: ${item.followersNumber}</strong></li>
             <li><strong>Logo: ${item.logo}</strong></li>
-            <li><strong>Music Styles: ${item.musicStyle}</strong></li>
+            <li><strong>Music Styles: ${formatGenres(item).join(', ')}</strong></li>
             <li><strong>Price: ${item.price}€</strong></li>
 </ul>`).join('')).join('')}
             <h2>Do you want to verify your account?</h2>

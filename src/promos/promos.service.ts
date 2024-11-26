@@ -52,15 +52,69 @@ export class PromosService {
                 paymentStatus: "wait",
                 statusPromo: "wait",
                 verifyPromo: "wait",
-                
             });
 
-            const dataClient = await this.clientModel.findOne({ _id: data.userId });
+            const dataClient = await this.clientModel.findOne({_id: data.userId});
             if (+dataClient.balance <= data.amount) {
                 await this.clientModel.findOneAndUpdate(
-                    { _id: data.userId },
-                    { balance: "0" }
+                    {_id: data.userId},
+                    {balance: "0"}
                 );
+            }
+
+            const emailVideoContent = () => {
+                if (data.socialMedia === 'spotify' || data.socialMedia === 'soundcloud') {
+                    return data.videos.map((video, index) => `
+                    <p><strong>Song ${index + 1}:</strong></p>
+                    <ul>
+                        <li><strong>Track Title:</strong> ${video.postDescription}</li>
+                        <li><strong>Track Link:</strong> ${video.videoLink}</li>
+                        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
+                    </ul>
+                    <p><strong>Selected Influencers:</strong></p>
+    <ul>
+        ${data.selectInfluencers
+                        .filter(influencer => influencer.selectedVideo === video.videoLink)
+                        .map(influencer => `<li>${data.socialMedia} username: ${influencer.instagramUsername}</li>`)
+                        .join('')}
+    </ul>
+                `).join('');
+                } else if (data.socialMedia === 'press') {
+                    return data.videos.map((video, index) => `
+                    <p><strong>Video ${index + 1}:</strong></p>
+                    <ul>
+                        <li><strong>Link to Music, Events, News:</strong> ${video.videoLink}</li>
+                        <li><strong>Link to Artwork & Press Shots:</strong> ${video.postDescription}</li>
+                        <li><strong>Link To Press Release:</strong> ${video.storyTag}</li>
+                        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
+                    </ul>
+                    <p><strong>Selected Influencers:</strong></p>
+    <ul>
+        ${data.selectInfluencers
+                        .filter(influencer => influencer.selectedVideo === video.videoLink)
+                        .map(influencer => `<li>${data.socialMedia} username: ${influencer.instagramUsername}</li>`)
+                        .join('')}
+    </ul>
+                `).join('');
+                } else {
+                    return data.videos.map((video, index) => `
+                    <p><strong>Video ${index + 1}:</strong></p>
+                    <ul>
+                        <li><strong>Link:</strong> ${video.videoLink}</li>
+                        <li><strong>Post Description:</strong> ${video.postDescription}</li>
+                        <li><strong>Story Tag:</strong> ${video.storyTag}</li>
+                        <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink}</li>
+                        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
+                        <p><strong>Selected Influencers:</strong></p>
+    <ul>
+        ${data.selectInfluencers
+                        .filter(influencer => influencer.selectedVideo === video.videoLink)
+                        .map(influencer => `<li>${data.socialMedia} username: ${influencer.instagramUsername}</li>`)
+                        .join('')}
+    </ul>
+                    </ul>
+                `).join('');
+                }
             }
 
             const emailContent = `
@@ -68,23 +122,7 @@ export class PromosService {
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers on the ${data.socialMedia}:</p>
 <p><strong>Post Details:</strong></p>
 <p><strong>Campaign Name: ${data.campaignName}</strong></p>
-${data.videos.map((video, index) => `
-    <p><strong>Video ${index + 1}:</strong></p>
-    <ul>
-        <li><strong>Link:</strong> ${video.videoLink}</li>
-        <li><strong>Post Description:</strong> ${video.postDescription}</li>
-        <li><strong>Story Tag:</strong> ${video.storyTag}</li>
-        <li><strong>Swipe Up Link:</strong> ${video.swipeUpLink}</li>
-        <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
-    </ul>
-    <p><strong>Selected Influencers:</strong></p>
-    <ul>
-        ${data.selectInfluencers
-                .filter(influencer => influencer.selectedVideo === video.videoLink)
-                .map(influencer => `<li>${data.socialMedia} username: ${influencer.instagramUsername}</li>`)
-                .join('')}
-    </ul>
-`).join('')}
+${emailVideoContent()}
 <p>Payment Method Used: ${result.paymentType}</p>
 <p>
     <a style="font-weight: 600" href="${process.env.SERVER}/promos/verify-promo?promoId=${result._id}&status=accept">
@@ -115,7 +153,7 @@ ${data.videos.map((video, index) => `
             };
         }
     }
-    
+
     async createPromosForEstimate(data: CreatePromosEstimateDto, isPO: boolean = false) {
         try {
             if (!data) {
@@ -206,8 +244,8 @@ ${data.videos.map((video, index) => `
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -247,13 +285,13 @@ ${data.videos.map((video, index) => `
 
     async updateEstimatePromo(promoId: string, isPoNeed: string) {
         try {
-            const findPromo = await this.promosModel.findOne({ _id: promoId }).lean().exec();
+            const findPromo = await this.promosModel.findOne({_id: promoId}).lean().exec();
 
             if (!findPromo) {
-                return { status: 404, message: 'Promo not found' };
+                return {status: 404, message: 'Promo not found'};
             }
 
-            let updateFields: any = { statusPromo: findPromo.statusPromo, verifyPromo: findPromo.verifyPromo };
+            let updateFields: any = {statusPromo: findPromo.statusPromo, verifyPromo: findPromo.verifyPromo};
 
             const isPoNeedBool = isPoNeed === 'true';
 
@@ -276,15 +314,15 @@ ${data.videos.map((video, index) => `
 
             if (updateFields.statusPromo !== findPromo.statusPromo || updateFields.verifyPromo !== findPromo.verifyPromo) {
                 await this.promosModel.findOneAndUpdate(
-                    { _id: promoId },
+                    {_id: promoId},
                     updateFields
                 );
-            } 
+            }
 
-            return { status: 200, message: 'estimate Promo status updated successfully' };
+            return {status: 200, message: 'estimate Promo status updated successfully'};
         } catch (err) {
             console.error('Error updating promo status:', err);
-            return { status: 500, message: err.message };
+            return {status: 500, message: err.message};
         }
     }
 
@@ -318,7 +356,7 @@ ${data.videos.map((video, index) => `
                 const influencers = await this.influencerModel.find({_id: {$in: influencersIds}});
 
                 for (let influencer of influencers) {
-                    const influencerInstagramAccounts = influencer.instagram.map((account) => account.instagramUsername); 
+                    const influencerInstagramAccounts = influencer.instagram.map((account) => account.instagramUsername);
 
                     const influencerVideos = checkPromo.videos.filter((video) => {
                         return checkPromo.selectInfluencers.some((influencerData) => {
@@ -332,7 +370,7 @@ ${data.videos.map((video, index) => `
                                 return checkPromo.selectInfluencers.some(influencerData => influencerData.selectedVideo === video.videoLink && influencerData.instagramUsername === account.instagramUsername);
                             }))
                             .map(account => account.instagramUsername)
-                            .join(', '); 
+                            .join(', ');
 
                         const emailToInfluencer = `
 <p>Hi,</p>
@@ -440,7 +478,7 @@ ${influencerVideos.map((video, index) => `
         const dropboxService = new DropboxService();
         return await dropboxService.isFileUploaded(fileName);
     }
-    
+
     async historyPromosClient(id: string) {
         try {
             if (!id) {
@@ -618,7 +656,7 @@ ${influencerVideos.map((video, index) => `
             };
         }
     }
-    
+
     async historyPromosInfluencer(id: string) {
         try {
             if (!id) {
@@ -902,7 +940,7 @@ ${influencerVideos.map((video, index) => `
                             partialRefund: findNewPromo.partialRefund + price,
                         },
                     },
-                    { new: true }
+                    {new: true}
                 );
 
                 const checkUserInfluencer = await this.influencerModel.findById(influencerId);
@@ -1094,6 +1132,7 @@ ${influencerVideos.map((video, index) => `
                 description: promoCurrent.videos?.map(video => video.postDescription) || "No description",
                 dateRequest: promoCurrent.createdAt,
                 date: promoCurrent.createdAt,
+                campaignName: promoCurrent.campaignName,
             };
         } catch (err) {
             console.log(err);
@@ -1290,7 +1329,7 @@ ${influencerVideos.map((video, index) => `
             data: screenshotUrl,
         };
     }
-    
+
     async getPromoByPublicShareLink(promoId: string) {
         try {
             if (!promoId) {
@@ -1300,10 +1339,7 @@ ${influencerVideos.map((video, index) => `
                 };
             }
 
-            const promo = await this.promosModel.
-            findById(promoId).
-            lean().
-            exec();
+            const promo = await this.promosModel.findById(promoId).lean().exec();
 
             if (!promo) {
                 return {
