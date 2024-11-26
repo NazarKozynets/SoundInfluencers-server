@@ -125,6 +125,9 @@ export class Promos {
   @Prop({required: false, default: 0})
   partialRefund: number;
   
+  @Prop({required: false, default: false})
+  isCpmAndResultHidden: boolean;
+  
   @Prop()
   createdAt: Date;
 }

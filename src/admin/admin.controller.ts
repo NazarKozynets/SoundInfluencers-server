@@ -205,4 +205,9 @@ export class AdminController {
     adminHideInstagramAccount(@Param('influencerId') influencerId: string, @Param('instagramUsername') instagramUsername: string) {
         return this.adminService.adminHideInstagramAccount(influencerId, instagramUsername);
     }
+    
+    @Put('promos/update/hideCpmAndResultForCampaign/:promoId')
+    hideCpmAndResultForCampaign(@Param('promoId') promoId: string) {
+        return this.adminService.hideCpmAndResultForCampaign(promoId);
+    }
 }

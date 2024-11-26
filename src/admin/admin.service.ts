@@ -1698,4 +1698,32 @@ Soundinfluencers Team
             };
         }
     }
+    
+    async hideCpmAndResultForCampaign(campaignId: string) {
+        try {
+            const campaign = await this.promosModel.findOne({_id: campaignId});
+
+            if (!campaign) {
+                return {
+                    status: 404,
+                    message: 'Campaign not found',
+                };
+            }
+
+            campaign.isCpmAndResultHidden = !campaign.isCpmAndResultHidden;
+
+            await campaign.save();
+
+            return {
+                status: 200,
+                message: 'CPM and Result hidden successfully',
+            };
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: 'An unknown error occurred',
+            };
+        }
+    };
 }
