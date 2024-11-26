@@ -244,8 +244,8 @@ ${emailVideoContent()}
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    "nazarkozynets030606@zohomail.eu",
-                    // "admin@soundinfluencers.com",
+                    // "nazarkozynets030606@zohomail.eu",
+                    "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
