@@ -137,6 +137,9 @@ export class Promos {
 
     @Prop({required: true})
     socialMedia: string;
+
+    @Prop({required: false, default: false})
+    isCpmAndResultHidden: boolean;
 }
 
 export const PromosSchema = SchemaFactory.createForClass(Promos);

@@ -1052,8 +1052,10 @@ export class AdminService {
                 };
             }
 
+            const video = promo.videos.find((video) => video._id === data.videoId);
+
             if (data.newVideoLink) {
-                const influencer = promo.selectInfluencers.find((influencer) => influencer.selectedVideo === data.oldVideoLink);
+                const influencer = promo.selectInfluencers.find((influencer) => influencer.instagramUsername === data.selectedInstagramUsername);
 
                 if (!influencer) {
                     return {
@@ -1067,18 +1069,14 @@ export class AdminService {
                 }
             }
 
-            const video = promo.videos.find((video) => video._id === data.videoId);
-
-            if (video) {
-                if (data.newVideoLink) {
-                    video.videoLink = data.newVideoLink;
-                }
-                video.postDescription = data.postDescription;
-                video.storyTag = data.storyTag;
-                video.swipeUpLink = data.swipeUpLink;
-                video.specialWishes = data.specialWishes;
+            if (video && data.newVideoLink && data.isNewVideo) {
+                video.videoLink = data.newVideoLink;
             }
-
+            video.postDescription = data.postDescription;
+            video.storyTag = data.storyTag;
+            video.swipeUpLink = data.swipeUpLink;
+            video.specialWishes = data.specialWishes;
+            
             await promo.save();
 
             return {
@@ -1651,4 +1649,32 @@ Soundinfluencers Team
             };
         }
     }
+    
+    async hideCpmAndResultForCampaign(campaignId: string) {
+        try {
+            const campaign = await this.promosModel.findOne({_id: campaignId});
+
+            if (!campaign) {
+                return {
+                    status: 404,
+                    message: 'Campaign not found',
+                };
+            }
+
+            campaign.isCpmAndResultHidden = !campaign.isCpmAndResultHidden;
+
+            await campaign.save();
+
+            return {
+                status: 200,
+                message: 'CPM and Result hidden successfully',
+            };
+        } catch (err) {
+            console.error('Error occurred:', err);
+            return {
+                status: 500,
+                message: 'An unknown error occurred',
+            };
+        }
+    };
 }
