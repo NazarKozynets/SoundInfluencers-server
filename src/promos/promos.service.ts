@@ -1183,33 +1183,79 @@ ${influencerVideos.map((video, index) => `
                     item.influencerId === influencerId
             );
 
+            const paymentGo = async () => {
+                const checkInfluencer =
+                    await this.influencerModel.findById(influencerId);
+
+                const currentInstagram = checkInfluencer.instagram.find(
+                    (fin) => fin.instagramUsername === instagramUsername
+                );
+
+                await this.influencerModel.findOneAndUpdate(
+                    {_id: influencerId},
+                    {
+                        balance: String(
+                            Number(checkInfluencer.balance) +
+                            (+currentInstagram.price.replace(/[^\d]/g, ""))
+                        ),
+                    }
+                );
+            };
+
             const updateNewPromo = await (async () => {
-                if (
+                if ((findNewPromo.socialMedia === 'spotify' || findNewPromo.socialMedia === 'soundcloud') && data.screenshot) {
+                    if (dataInstagram.closePromo !== "close") await paymentGo();
+                    
+                    return await this.promosModel.findOneAndUpdate(
+                        {
+                            _id: promoId,
+                            selectInfluencers: {
+                                $elemMatch: {
+                                    influencerId: influencerId,
+                                    instagramUsername: instagramUsername,
+                                },
+                            },
+                        },
+                        {
+                            $set: {
+                                "selectInfluencers.$": {
+                                    ...dataInstagram,
+                                    ...data,
+                                    closePromo: "close",
+                                },
+                            },
+                        }
+                    );
+                } else if (findNewPromo.socialMedia === "press" && data.postLink) {
+                    if (dataInstagram.closePromo !== 'close') await paymentGo();
+                    
+                    return await this.promosModel.findOneAndUpdate(
+                        {
+                            _id: promoId,
+                            selectInfluencers: {
+                                $elemMatch: {
+                                    influencerId: influencerId,
+                                    instagramUsername: instagramUsername,
+                                },
+                            },
+                        },
+                        {
+                            $set: {
+                                "selectInfluencers.$": {
+                                    ...dataInstagram,
+                                    ...data,
+                                    closePromo: "close",
+                                },
+                            },
+                        }
+                    );
+                } else if (
                     data.postLink &&
                     data.datePost &&
                     data.impressions &&
                     data.like &&
                     data.screenshot
                 ) {
-                    const paymentGo = async () => {
-                        const checkInfluencer =
-                            await this.influencerModel.findById(influencerId);
-
-                        const currentInstagram = checkInfluencer.instagram.find(
-                            (fin) => fin.instagramUsername === instagramUsername
-                        );
-
-                        await this.influencerModel.findOneAndUpdate(
-                            {_id: influencerId},
-                            {
-                                balance: String(
-                                    Number(checkInfluencer.balance) +
-                                    (+currentInstagram.price.replace(/[^\d]/g, ""))
-                                ),
-                            }
-                        );
-                    };
-
                     if (dataInstagram.closePromo !== "close") await paymentGo();
 
                     return await this.promosModel.findOneAndUpdate(
@@ -1258,7 +1304,11 @@ ${influencerVideos.map((video, index) => `
             let checkPromo = true;
             findNewPromo.selectInfluencers.forEach((item) => {
                 if (item.confirmation === "refusing") return;
-                if (item.instagramUsername === instagramUsername) {
+                if (((data.socialMedia === 'spotify' || data.socialMedia === 'soundcloud') && (data.screenshot || item.screenshot)) || item.closePromo === "close") {
+                    if (item.closePromo === "close") return;
+                } else if ((data.socialMedia === "press" && (data.postLink || item.postLink)) || item.closePromo === "close") {
+                    if (item.closePromo === "close") return;
+                } else if (item.instagramUsername === instagramUsername) {
                     if (
                         data.postLink &&
                         data.datePost &&
@@ -1268,14 +1318,14 @@ ${influencerVideos.map((video, index) => `
                     ) {
                         return;
                     }
-                }
-                if (
+                } else if (
                     item.postLink &&
                     item.datePost &&
                     item.impressions &&
                     item.like &&
                     item.screenshot
                 ) {
+                    return;
                 } else {
                     checkPromo = false;
                 }
@@ -1388,122 +1438,4 @@ ${influencerVideos.map((video, index) => `
             };
         }
     }
-
-    // async updateOngoingPromoPostLinkAndDatePost(
-    //     influencerId: string,
-    //     instagramUsername: string,
-    //     promoId: string,
-    //     data: any,
-    // ) {
-    //     if (!influencerId || !promoId || !instagramUsername) {
-    //         return {
-    //             status: 400,
-    //             message: "Not enough arguments",
-    //         };
-    //     }
-    //
-    //     try {
-    //         const findNewPromo = await this.promosModel
-    //             .findOne({
-    //                 _id: promoId,
-    //                 selectInfluencers: {
-    //                     $elemMatch: {
-    //                         influencerId: influencerId,
-    //                         instagramUsername: instagramUsername,
-    //                     },
-    //                 },
-    //             })
-    //             .lean()
-    //             .exec();
-    //
-    //         if (!findNewPromo) {
-    //             return {
-    //                 code: 404,
-    //                 message: "not found",
-    //             };
-    //         }
-    //
-    //         const dataInstagram = findNewPromo.selectInfluencers.find(
-    //             (item) =>
-    //                 item.instagramUsername === instagramUsername &&
-    //                 item.influencerId === influencerId
-    //         );
-    //
-    //         const promises = findNewPromo.selectInfluencers.map(async (item) => {
-    //             if (item.postLink) {
-    //                 try {
-    //                     const browser = await puppeteer.launch();
-    //                     const page = await browser.newPage();
-    //                     await page.goto(item.postLink, { waitUntil: 'load' });
-    //
-    //                     const content = await page.content();
-    //
-    //                     const postDescription = await page.evaluate(() => {
-    //                         const descriptionMeta = document.querySelector('meta[name="description"]');
-    //                         if (descriptionMeta) {
-    //                             return descriptionMeta.getAttribute('content');
-    //                         }
-    //
-    //                         const descriptionDiv = document.querySelector('div[role="dialog"] div') ||
-    //                             document.querySelector('div[class*="C4VMK"] > span'); 
-    //                         return descriptionDiv ? (descriptionDiv as HTMLElement).innerText : "Описание не найдено";
-    //                     });
-    //
-    //                     // Извлечение количества лайков
-    //                     const likesMatch = postDescription.match(/(\d+) likes/);
-    //                     const likesCount = likesMatch ? parseInt(likesMatch[1], 10) : 0;
-    //
-    //                     console.log(`Post Link: ${item.postLink}, Likes: ${likesCount}`);
-    //                     await browser.close();
-    //                 } catch (error) {
-    //                     console.error(`Ошибка при получении данных из ${item.postLink}:`, error.message);
-    //                 }
-    //             }
-    //         });
-    //
-    //         await Promise.all(promises);
-    //
-    //         const updateNewPromo = await this.promosModel.findOneAndUpdate(
-    //             {
-    //                 _id: promoId,
-    //                 selectInfluencers: {
-    //                     $elemMatch: {
-    //                         influencerId: influencerId,
-    //                         instagramUsername: instagramUsername,
-    //                     },
-    //                 },
-    //             },
-    //             {
-    //                 $set: {
-    //                     "selectInfluencers.$": {
-    //                         ...dataInstagram,
-    //                         postLink: data.postLink || dataInstagram.postLink,
-    //                         datePost: data.datePost || dataInstagram.datePost,
-    //                     },
-    //                 },
-    //             },
-    //         );
-    //
-    //         let checkPromo = findNewPromo.selectInfluencers.every((item) =>
-    //             item.postLink && item.datePost
-    //         );
-    //
-    //         if (checkPromo) {
-    //             await this.promosModel.findOneAndUpdate(
-    //                 { _id: promoId },
-    //                 { statusPromo: "finally" }
-    //             );
-    //         }
-    //
-    //         return {
-    //             code: 200,
-    //             updateNewPromo,
-    //         };
-    //     } catch (err) {
-    //         return {
-    //             code: 500,
-    //             message: err.message || "Internal server error",
-    //         };
-    //     }
-    // }
 }

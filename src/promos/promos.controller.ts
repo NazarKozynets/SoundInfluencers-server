@@ -173,7 +173,6 @@ export class PromosController {
         },
         @Body() body,
     ) {
-        console.log(args);
         return this.promosService.updateOngoingPromo(
             args.influencerId,
             args.instagramUsername,
