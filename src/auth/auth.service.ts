@@ -625,6 +625,39 @@ export class AuthService {
         }
     }
 
+    async getInfluencers() {
+        try {
+            const getInfluencersAll = await this.influencerModel
+                .find({statusVerify: 'accept'})
+                .find({ statusVerify: 'accept' })
+                .select(['-password', '-balance', '-phone', '-email'])
+                .lean()
+                .exec();
+
+            const listInstagram = getInfluencersAll.map((item) => {
+                if (!Array.isArray(item.instagram)) return [];
+                return item.instagram
+                    .filter((itemIns) => itemIns.isHidden !== true)
+                    .map((itemIns) => ({
+                        ...itemIns,
+                        _id: item._id,
+                    }));
+
+            });
+
+            return {
+                code: 200,
+                influencers: listInstagram.flat(),
+            };
+        } catch (err) {
+            console.log(err);
+            return {
+                code: 500,
+                message: err.message || 'An error occurred while fetching influencers.',
+            };
+        }
+    }
+    
     
     async getInfluencersWithoutSocialMedia() {
         try {
