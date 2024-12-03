@@ -6,9 +6,7 @@ import mongoose from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdatePasswordClientDto } from './dto/update-password.dto';
 import { UpdatePersonalInfluencerDto } from './dto/update-personal-influencer.dto';
-import { UpdateMusicStyleInfluencerDto } from './dto/update-music-influencer.dto';
-import { UpdateEmailInfluencerDto } from './dto/update-email-influencer.dto';
-import { UpdatePhoneInfluencerDto } from './dto/update-phone-influencer.dto';
+import {UpdateSocialMediaAccountDto} from "./dto/update-social-media-account.dto";
 const bcrypt = require('bcryptjs');
 
 @Injectable()
@@ -29,7 +27,6 @@ export class ProfileService {
         };
       }
 
-      console.log(data);
       const checkUser = await this.clientModel.findOne({ _id: data.id });
 
       if (!checkUser) {
@@ -78,18 +75,23 @@ export class ProfileService {
           message: 'User not found',
         };
       }
-      await this.influencerModel.findOneAndUpdate(
-        { _id: data.id },
-        {
-          firstName: data.firstName,
-          instagram: data.instagram,
-          influencerName: data.influencerName,
-        },
+      const updatedUser = await this.influencerModel.findOneAndUpdate(
+          { _id: data.id },
+          {
+            firstName: data.firstName,
+            email: data.email,
+            phone: data.phone,
+          },
+          { new: true } 
       );
-
       return {
         code: 200,
         message: 'personal data update',
+        data: {
+          firstName: updatedUser.firstName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+        },
       };
     } catch (err) {
       console.log(err);
@@ -100,117 +102,6 @@ export class ProfileService {
     }
   }
 
-  async updateMusicStyleInfluencer(data: UpdateMusicStyleInfluencerDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.influencerModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.clientModel.findOneAndUpdate(
-        { _id: data.id },
-        {
-          musicStyle: data.musicStyle,
-        },
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-
-  async updateEmailInfluencer(data: UpdateEmailInfluencerDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.influencerModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.influencerModel.findOneAndUpdate(
-        { _id: data.id },
-        {
-          email: data.email,
-        },
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-
-  async updatePhoneInfluencer(data: UpdatePhoneInfluencerDto) {
-    try {
-      if (!data) {
-        return {
-          status: 400,
-          message: 'Not enough arguments',
-        };
-      }
-
-      const checkUser = await this.influencerModel.findOne({ _id: data.id });
-
-      if (!checkUser) {
-        return {
-          code: 404,
-          message: 'User not found',
-        };
-      }
-      await this.clientModel.findOneAndUpdate(
-        { _id: data.id },
-        {
-          phone: data.phone,
-        },
-      );
-
-      return {
-        code: 200,
-        message: 'personal data update',
-      };
-    } catch (err) {
-      console.log(err);
-      return {
-        code: 500,
-        message: err,
-      };
-    }
-  }
-  
   async updatePasswordClient(data: UpdatePasswordClientDto) {
     try {
       if (!data) {
@@ -297,4 +188,70 @@ export class ProfileService {
       };
     }
   }
+
+  async updateSocialMediaAccount(data: UpdateSocialMediaAccountDto) {
+    try {
+      if (!data) {
+        return {
+          code: 400,
+          message: 'Not enough arguments',
+        };
+      }
+
+      const influencer = await this.influencerModel.findOne({ _id: data._id });
+      if (!influencer) {
+        return {
+          code: 404,
+          message: 'User not found',
+        };
+      }
+
+      const socialMediaAccounts = influencer[data.typeOfSocialMedia];
+      if (!socialMediaAccounts || socialMediaAccounts.length === 0) {
+        return {
+          code: 404,
+          message: `No accounts found for type: ${data.typeOfSocialMedia}`,
+        };
+      }
+
+      const accountIndex = socialMediaAccounts.findIndex(
+          (account) => account._id.toString() === data.accountId
+      );
+
+      if (accountIndex === -1) {
+        return {
+          code: 404,
+          message: 'Account not found',
+        };
+      }
+
+      socialMediaAccounts[accountIndex] = {
+        ...socialMediaAccounts[accountIndex],
+        instagramUsername: data.instagramUsername,
+        instagramLink: data.instagramLink,
+        followersNumber: data.followersNumber,
+        logo: data.logo,
+        musicStyle: data.musicStyle,
+        musicSubStyles: data.musicSubStyles,
+        musicStyleOther: data.musicStyleOther,
+        countries: data.countries,
+        categories: data.categories,
+      };
+
+      influencer[data.typeOfSocialMedia] = socialMediaAccounts;
+      await influencer.save();
+
+      return {
+        code: 200,
+        message: 'Social media account updated successfully',
+      };
+    } catch (err) {
+      console.error('Error updating social media account:', err);
+      return {
+        code: 500,
+        message: 'Internal server error',
+      };
+    }
+  }
+
 }

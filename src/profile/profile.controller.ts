@@ -11,13 +11,8 @@ import {
 import { ProfileService } from './profile.service';
 import { UpdatePersonalClientDto } from './dto/update-personal-client.dto';
 import { UpdatePasswordClientDto } from './dto/update-password.dto';
-import { UpdateCompanyClientDto } from './dto/update-company-client.dto';
-import { UpdateEmailClientDto } from './dto/update-email-client.dto';
-import { UpdatePhoneClientDto } from './dto/update-phone-client.dto';
 import { UpdatePersonalInfluencerDto } from './dto/update-personal-influencer.dto';
-import { UpdateMusicStyleInfluencerDto } from './dto/update-music-influencer.dto';
-import { UpdateEmailInfluencerDto } from './dto/update-email-influencer.dto';
-import { UpdatePhoneInfluencerDto } from './dto/update-phone-influencer.dto';
+import {UpdateSocialMediaAccountDto} from "./dto/update-social-media-account.dto";
 
 @Controller('profile')
 export class ProfileController {
@@ -37,19 +32,9 @@ export class ProfileController {
   updatePersonalInfluencer(@Body() data: UpdatePersonalInfluencerDto) {
     return this.profileService.updatePersonalInfluencer(data);
   }
-
-  @Put('influencer/music')
-  updateMusicStyleInfluencer(@Body() data: UpdateMusicStyleInfluencerDto) {
-    return this.profileService.updateMusicStyleInfluencer(data);
-  }
-
-  @Put('influencer/email')
-  updateEmailInfluencer(@Body() data: UpdateEmailInfluencerDto) {
-    return this.profileService.updateEmailInfluencer(data);
-  }
-
-  @Put('influencer/phone')
-  updatePhoneInfluencer(@Body() data: UpdatePhoneInfluencerDto) {
-    return this.profileService.updatePhoneInfluencer(data);
+  
+  @Put('influencer/update-social-media-account')
+  updateSocialMediaAccount(@Body() data: UpdateSocialMediaAccountDto) {
+    return this.profileService.updateSocialMediaAccount(data);
   }
 }
