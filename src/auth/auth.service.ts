@@ -4,7 +4,7 @@ import {CreateClientDto} from './dto/create-client.dto';
 import {CreateInfluencerDto} from './dto/create-influencer.dto';
 import {Client} from './schemas/client.schema';
 import mongoose from 'mongoose';
-import { Types } from 'mongoose';
+import {Types} from 'mongoose';
 import {Influencer} from './schemas/influencer.schema';
 import {LoginClientDto} from './dto/login-client.dto';
 import {VerifyDto} from './dto/verify.dto';
@@ -163,160 +163,141 @@ export class AuthService {
     async createInfluencer(data: CreateInfluencerDto) {
         try {
             if (!data) {
-                return {
-                    status: 400,
-                    message: 'Not enough arguments',
-                };
+                return {status: 400, message: 'Not enough arguments'};
             }
 
-            const checkUser = await (async () => {
-                const checkInfluencer = await this.influencerModel.findOne({
-                    email: data.email,
-                });
+            const checkUser = await this.influencerModel.findOne({email: data.email})
+                || await this.clientModel.findOne({email: data.email});
 
-                if (checkInfluencer) return checkInfluencer;
-
-                const checkClient = await this.clientModel.findOne({
-                    email: data.email,
-                });
-                if (checkClient) return checkClient;
-
-                return null;
-            })();
-
-            if (!checkUser) {
-            } else {
-                return {
-                    code: 409,
-                    message: 'This user already exists',
-                };
+            if (checkUser) {
+                return {code: 409, message: 'This user already exists'};
             }
 
-            const checkUserInstagram = await (async () => {
-                const listInfluencer = await this.influencerModel.find({});
+            const socialNetworks = ['instagram', 'tiktok', 'spotify', 'soundcloud', 'facebook', 'youtube', 'press'];
 
-                let isHaveInstagramInfluencer = false;
+            for (const network of socialNetworks) {
+                const accounts = data[network] || [];
+                const usernames = accounts.map((item) => item.instagramUsername);
 
-                const dataInstagramLogin = data.instagram.map((item) => {
-                    return item.instagramUsername;
-                });
+                const networkFilter = {[`${network}.instagramUsername`]: {$in: usernames}};
+                const isUsernameUsed = await this.influencerModel.exists(networkFilter)
+                    || await this.clientModel.exists({instagramUsername: {$in: usernames}});
 
-                await Promise.all(
-                    listInfluencer.map(async (item) => {
-                        item.instagram.forEach((ins) => {
-                            if (dataInstagramLogin.includes(ins.instagramUsername)) {
-                                isHaveInstagramInfluencer = true;
-                            }
-                        });
-                    }),
-                );
-
-                if (isHaveInstagramInfluencer) return true;
-
-                let isHaveInstagramClient = false;
-                await Promise.all(
-                    data.instagram.map(async (item) => {
-                        const checkClient = await this.clientModel.findOne({
-                            instagramUsername: item.instagramUsername,
-                        });
-
-                        if (checkClient) {
-                            isHaveInstagramClient = true;
-                        }
-                    }),
-                );
-
-                if (isHaveInstagramClient) return true;
-
-                return null;
-            })();
-
-            if (checkUserInstagram) {
-                return {
-                    code: 409,
-                    message: 'This instagram already exists',
-                };
+                if (isUsernameUsed) {
+                    return {code: 409, message: `This ${network} username already exists`};
+                }
             }
 
-            const checkInstagram = data.instagram.map((item) => {
-                const musicStyle = item.musicStyle === 'Other' && item.musicStyleOther
-                    ? item.musicStyleOther[0]
-                    : item.musicStyle;
+            const processedData = {};
+            for (const network of socialNetworks) {
+                const accounts = data[network] || [];
 
-                const sanitizedPrice = parseFloat(item.price.replace(/[^\d.-]/g, '')) || 0;
-                const publicPrice = (sanitizedPrice * 2).toString(); 
+                processedData[network] = accounts.map((item) => {
+                    const musicStyle = item.musicStyle === 'Other' && item.musicStyleOther
+                        ? item.musicStyleOther[0]
+                        : item.musicStyle;
 
-                return {
-                    ...item,
-                    musicStyle: musicStyle,
-                    publicPrice: publicPrice, 
-                    isHidden: false,
-                };
-            });
+                    const sanitizedPrice = parseFloat(String(item.price).replace(/[^\d.-]/g, '')) || 0;
+                    const publicPrice = (sanitizedPrice * 2).toString();
+
+                    return {
+                        ...item,
+                        musicStyle: musicStyle,
+                        publicPrice: publicPrice,
+                        isHidden: false,
+                    };
+                });
+            }
 
             const newUser = await this.influencerModel.create({
                 ...data,
-                instagram: checkInstagram,
+                ...processedData, 
                 password: bcrypt.hashSync(data.password),
             });
 
-
             const generateVerifyId = generateRandomString();
-
             await this.verifyInfluencerModel.create({
                 influencerId: newUser._id,
                 verifyId: generateVerifyId,
             });
-            // TODO: add another social medias
+
+            const formatGenres = (item) => {
+                const genresSet = new Set<string>();
+                if (item.musicStyle || item.musicSubStyles || item.musicStyleOther) {
+                    if (item.musicSubStyles?.length > 0) {
+                        for (const subStyle of item.musicSubStyles) {
+                            if (subStyle === "Melodic, Minimal") {
+                                genresSet.add("Techno (Melodic, Minimal)");
+                            }
+                            if (subStyle === "Hard, Peak") {
+                                genresSet.add("Techno (Hard, Peak)");
+                            }
+                            if (subStyle === "Tech House") {
+                                genresSet.add("House (Tech House)");
+                            }
+                            if (subStyle === "Melodic, Afro") {
+                                genresSet.add("House (Melodic, Afro)");
+                            }
+                        }
+                    } else if (item.musicStyle) {
+                        genresSet.add(item.musicStyle);
+                    }
+
+                    if (item.musicStyleOther?.length > 0) {
+                        for (const otherStyle of item.musicStyleOther) {
+                            if (otherStyle !== "House") {
+                                genresSet.add(otherStyle);
+                            }
+                        }
+                    }
+                }
+                return Array.from(genresSet);
+            };
+
             await sendMail(
-                // 'nazarkozynets030606@zohomail.eu',
+                // 'nazarkozynets030606@gmail.com',
                 'admin@soundinfluencers.com',
                 'soundinfluencers',
-                `<p>Request from a new partner ${
-                    data.firstName
-                }</p><b>Details:</b><br/><br/><p>First Name: ${data.firstName}</p>
-        ${data.instagram.map(
-                    (item, index) =>
-                        ` <p>(${index + 1}) Music Style: ${item.musicStyle}</p>
-            <p>(${index + 1}) Instagram: ${item.instagramUsername}</p>
-            <p>(${index + 1}) Instagram Link: ${item.instagramLink}</p>
-          <p>(${index + 1}) Followers Number: ${item.followersNumber}</p>,
-          <p>(${index + 1}) Logo: ${item.logo}</p>,
-          <p>(${index + 1}) Price: ${item.price}</p>`,
-                )}
-        <p>Email: ${data.email}</p>
-        <p>Phone: ${data.phone}</p>
-        <h2>Do you want to verify your account?</h2>
-        <a href="${
-                    process.env.SERVER
-                }/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=accept">ACCEPT</a>
-        <a href="${
-                    process.env.SERVER
-                }/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=cancel">CANCEL</a>
-        `,
+                `<p>Request from a new partner ${data.firstName}</p>
+            <b>Details:</b><br/><p>First Name: ${data.firstName}</p>
+            <p>Email: ${data.email}</p>
+            <p>Phone: ${data.phone}</p>
+            <br/>
+            ${socialNetworks.map((network) => data[network]?.map((item, index) => `
+                <p><strong>Network: ${network} (${index + 1} account)</strong></p>
+                
+            <ul>
+            <li><strong>Username: ${item.instagramUsername}</strong></li>
+            <li><strong>Link: ${item.instagramLink}</strong></li>
+            <li><strong>Followers: ${item.followersNumber}</strong></li>
+            <li><strong>Logo: ${item.logo}</strong></li>
+            <li><strong>Music Styles: ${formatGenres(item).join(', ')}</strong></li>
+            <li><strong>Price: ${item.price}€</strong></li>
+</ul>`).join('')).join('')}
+            <h2>Do you want to verify your account?</h2>
+            <a href="${process.env.SERVER}/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=accept">ACCEPT</a>
+            <a href="${process.env.SERVER}/auth/verify-influencer?verifyId=${generateVerifyId}&responseVerify=cancel">CANCEL</a>`,
                 'html',
             );
+
             await sendMail(
                 data.email,
                 'soundinfluencers',
                 `<p>Dear ${data.firstName},</p>
-      <p>Thank you for your subscription request submission.</p>
-      <p>An email with a status update will be sent to you soon.</p>
-      <p>Best regards,</p>
-      <p>SoundInfluencers team</p>`,
+            <p>Thank you for submitting your subscription request.</p>
+            <p>We will send you an email with a status update shortly.</p>
+            <p>Best regards,</p>
+            <p>The SoundInfluencers Team</p>`,
                 'html',
             );
-            return {
-                code: 201,
-                newUser,
-            };
+
+            return {code: 201, newUser};
         } catch (err) {
             console.log(err);
-            return {
-                code: 500,
-            };
+            return {code: 500};
         }
     }
+
 
     async verifyAdminInfluencer(verifyId: string, responseVerify: string) {
         if (!verifyId || !responseVerify) {
@@ -608,37 +589,85 @@ export class AuthService {
         }
     }
 
-    async getInfluencers() {
+    async getInfluencersWithSocialMedia(socialMedia: string) {
         try {
             const getInfluencersAll = await this.influencerModel
-                .find({statusVerify: 'accept'})
+                .find({ statusVerify: 'accept' })
                 .select(['-password', '-balance', '-phone', '-email'])
                 .lean()
                 .exec();
 
-            const listInstagram = getInfluencersAll.map((item) => {
-                if (!Array.isArray(item.instagram)) return [];
-                return item.instagram
-                    .filter((itemIns) => itemIns.isHidden !== true)
-                    .map((itemIns) => ({
-                    ...itemIns,
-                    _id: item._id,
-                }));
+            const influencersList = getInfluencersAll.map((item) => {
+                const socialMediaAccounts = item[socialMedia];
+
+                if (Array.isArray(socialMediaAccounts)) {
+                    return socialMediaAccounts
+                        .filter((account) => account.isHidden !== true)
+                        .map((account) => ({
+                            ...account,
+                            _id: item._id, 
+                        }));
+                }
+
+                return [];
             });
 
             return {
                 code: 200,
-                influencers: listInstagram.flat(),
+                influencers: influencersList.flat(), 
             };
         } catch (err) {
             console.log(err);
             return {
                 code: 500,
-                message: err,
+                message: err.message || 'An error occurred while fetching influencers.',
             };
         }
     }
+
     
+    async getInfluencersWithoutSocialMedia() {
+        try {
+            const influencers = await this.influencerModel
+                .find({ statusVerify: 'accept' }) 
+                .select(['-password', '-balance', '-phone', '-email']) 
+                .lean()
+                .exec();
+
+            const allAccounts = influencers.map((influencer) => {
+                const socialMediaKeys = ['instagram', 'tiktok', 'spotify', 'soundcloud', 'facebook', 'youtube', 'press'];
+
+                const accounts = socialMediaKeys.flatMap((socialMedia) => {
+                    const socialMediaAccounts = influencer[socialMedia];
+                    if (Array.isArray(socialMediaAccounts)) {
+                        return socialMediaAccounts
+                            .filter((account) => account.isHidden !== true) 
+                            .map((account) => ({
+                                ...account,
+                                socialMedia, 
+                                _id: influencer._id, 
+                                firstName: influencer.firstName,
+                            }));
+                    }
+                    return [];
+                });
+
+                return accounts;
+            });
+
+            return {
+                code: 200,
+                influencers: allAccounts.flat(),
+            };
+        } catch (err) {
+            console.error(err);
+            return {
+                code: 500,
+                message: err.message || 'An error occurred while fetching all influencer accounts.',
+            };
+        }
+    }
+
     async getClients() {
         try {
             const getClientsAll = await this.clientModel
@@ -662,7 +691,7 @@ export class AuthService {
 
     async getInfluencerById(id: string) {
         try {
-            const objectId = new Types.ObjectId(id); 
+            const objectId = new Types.ObjectId(id);
 
             const getInfluencer = await this.influencerModel
                 .findOne({_id: objectId})
@@ -682,10 +711,10 @@ export class AuthService {
             };
         }
     }
-    
+
     async getClientById(id: string) {
         try {
-            const objectId = new Types.ObjectId(id); 
+            const objectId = new Types.ObjectId(id);
 
             const getClient = await this.clientModel
                 .findOne({_id: objectId})
