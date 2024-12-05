@@ -738,16 +738,12 @@ export class AdminService {
                                 const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
                                 totalFollowers += parseInt(followersCount, 10);
 
-                                // const cleanedPrice = insta.price.replace(/[^\d]/g, '');
-                                // const cleanedPublicPrice = insta.publicPrice.replace(/[^\d]/g, '');
+                                const cleanedPrice = insta.price.replace(/[^\d]/g, '');
+                                const cleanedPublicPrice = insta.publicPrice.replace(/[^\d]/g, '');
 
-                                // Object.assign(promoInfluencer, {
-                                //     price: parseInt(cleanedPrice, 10),
-                                //     publicPrice: parseInt(cleanedPublicPrice, 10),
-                                // });
                                 Object.assign(promoInfluencer, {
-                                    price: 0,
-                                    publicPrice: 0,
+                                    price: parseInt(cleanedPrice, 10),
+                                    publicPrice: parseInt(cleanedPublicPrice, 10),
                                 });
                             }
                         }

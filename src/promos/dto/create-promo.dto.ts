@@ -26,7 +26,6 @@ interface VideoType {
   storyTag: string;
   swipeUpLink: string;
   specialWishes: string;
-  _id: string;
 }
 
 export class CreatePromosDto {
