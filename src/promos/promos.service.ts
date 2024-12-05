@@ -62,13 +62,37 @@ export class PromosService {
                 );
             }
 
+            const emailStartContent = () => {
+                if (data.socialMedia === 'spotify' || data.socialMedia === 'soundcloud') {
+                    return `
+                    <p>Hi,</p>
+<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers on the ${data.socialMedia}:</p>
+<p><strong>Post Details:</strong></p>
+<p><strong>Campaign Name: ${data.campaignName}</strong></p>
+                    `;
+                } else if (data.socialMedia === 'press') {
+                    return `
+                    <p>Hi,</p>
+<p>The client ${dataClient.firstName} has requested the following article for inclusion in this list of magazines in the press:</p>
+<p><strong>Post Details:</strong></p>
+<p><strong>Campaign Name: ${data.campaignName}</strong></p>`
+                } else {
+                    return `
+                    <p>Hi,</p>
+<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers on the ${data.socialMedia}:</p>
+<p><strong>Post Details:</strong></p>
+<p><strong>Campaign Name: ${data.campaignName}</strong></p>
+                    `;
+                }
+            };
+            
             const emailVideoContent = () => {
                 if (data.socialMedia === 'spotify' || data.socialMedia === 'soundcloud') {
                     return data.videos.map((video, index) => `
-                    <p><strong>Song ${index + 1}:</strong></p>
+                    <p><strong>Song/Playlist ${index + 1}:</strong></p>
                     <ul>
-                        <li><strong>Track Title:</strong> ${video.postDescription}</li>
-                        <li><strong>Track Link:</strong> ${video.videoLink}</li>
+                        <li><strong>Track/Playlist Title:</strong> ${video.postDescription}</li>
+                        <li><strong>Track/Playlist Link:</strong> ${video.videoLink}</li>
                         <li><strong>Special Wishes:</strong> ${video.specialWishes}</li>
                     </ul>
                     <p><strong>Selected Influencers:</strong></p>
@@ -81,7 +105,7 @@ export class PromosService {
                 `).join('');
                 } else if (data.socialMedia === 'press') {
                     return data.videos.map((video, index) => `
-                    <p><strong>Video ${index + 1}:</strong></p>
+                    <p><strong>Article ${index + 1}:</strong></p>
                     <ul>
                         <li><strong>Link to Music, Events, News:</strong> ${video.videoLink}</li>
                         <li><strong>Link to Artwork & Press Shots:</strong> ${video.postDescription}</li>
@@ -118,10 +142,7 @@ export class PromosService {
             }
 
             const emailContent = `
-<p>Hi,</p>
-<p>The Client ${dataClient.firstName} has requested the following post for this list of influencers on the ${data.socialMedia}:</p>
-<p><strong>Post Details:</strong></p>
-<p><strong>Campaign Name: ${data.campaignName}</strong></p>
+${emailStartContent()}
 ${emailVideoContent()}
 <p>Payment Method Used: ${result.paymentType}</p>
 <p>
@@ -134,8 +155,8 @@ ${emailVideoContent()}
 </p>`;
 
             await sendMail(
-                // "nazarkozynets030606@zohomail.eu",
-                "admin@soundinfluencers.com",
+                "nazarkozynets030606@zohomail.eu",
+                // "admin@soundinfluencers.com",
                 "soundinfluencers",
                 emailContent,
                 "html"
@@ -902,8 +923,8 @@ ${influencerVideos.map((video, index) => `
                 const checkUserClient = await this.clientModel.findById(findNewPromo.userId);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>${checkUserInfluencer.email} accepted the offer for ${checkUserClient.email}'s campaign</p>
                 <p>Details:</p><br/>
