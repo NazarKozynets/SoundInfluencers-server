@@ -1052,7 +1052,7 @@ export class AdminService {
                 };
             }
 
-            const video = promo.videos.find((video) => video._id === data.videoId);
+            const video = promo.videos.find((video) => video._id.toString() === data.videoId);
 
             if (data.newVideoLink) {
                 const influencer = promo.selectInfluencers.find((influencer) => influencer.instagramUsername === data.selectedInstagramUsername);
@@ -1237,7 +1237,7 @@ export class AdminService {
 
             if (!promo.videos.some(video => video.videoLink === data.selectedVideo)) {
                 const newVideo = {
-                    _id: new Types.ObjectId().toString(),
+                    _id: new Types.ObjectId(),
                     videoLink: data.selectedVideo,
                     postDescription: '',
                     storyTag: '',
