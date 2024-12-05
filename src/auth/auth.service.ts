@@ -179,9 +179,11 @@ export class AuthService {
                 const accounts = data[network] || [];
                 const usernames = accounts.map((item) => item.instagramUsername);
 
-                const networkFilter = {[`${network}.instagramUsername`]: {$in: usernames}};
-                const isUsernameUsed = await this.influencerModel.exists(networkFilter)
-                    || await this.clientModel.exists({instagramUsername: {$in: usernames}});
+                const networkFilter = {
+                    [`${network}.instagramUsername`]: {$in: usernames},
+                    isDeleted: {$ne: true}
+                };
+                const isUsernameUsed = await this.influencerModel.exists(networkFilter);
 
                 if (isUsernameUsed) {
                     return {code: 409, message: `This ${network} username already exists`};
@@ -205,6 +207,7 @@ export class AuthService {
                         musicStyle: musicStyle,
                         publicPrice: publicPrice,
                         isHidden: false,
+                        isDeleted: false,
                     };
                 });
             }
@@ -297,7 +300,6 @@ export class AuthService {
             return {code: 500};
         }
     }
-
 
     async verifyAdminInfluencer(verifyId: string, responseVerify: string) {
         if (!verifyId || !responseVerify) {
@@ -602,7 +604,7 @@ export class AuthService {
 
                 if (Array.isArray(socialMediaAccounts)) {
                     return socialMediaAccounts
-                        .filter((account) => account.isHidden !== true)
+                        .filter((account) => account.isHidden !== true && account.isDeleted !== true)
                         .map((account) => ({
                             ...account,
                             _id: item._id, 

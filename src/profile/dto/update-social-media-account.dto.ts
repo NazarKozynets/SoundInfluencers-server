@@ -23,6 +23,12 @@ export class UpdateSocialMediaAccountDto {
     logo: string;
     
     @ApiProperty({required: true})
+    price: string;
+    
+    @ApiProperty({required: true})
+    publicPrice: string;
+    
+    @ApiProperty({required: true})
     musicStyle: string;
     
     @ApiProperty({required: true})
