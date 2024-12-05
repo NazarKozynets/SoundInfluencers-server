@@ -1,4 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import mongoose from "mongoose";
 
 @Schema()
 export class SelectPrice {
@@ -90,7 +91,16 @@ export class Promos {
   selectInfluencers: SelectInfluencers[];
 
   @Prop({
-    type: [{ videoLink: String, postDescription: String, storyTag: String, swipeUpLink: String, specialWishes: String, _id: String }],
+    type: [
+      {
+        videoLink: String,
+        postDescription: String,
+        storyTag: String,
+        swipeUpLink: String,
+        specialWishes: String,
+        _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+      },
+    ],
   })
   videos: Array<{
     videoLink: string;
@@ -98,8 +108,8 @@ export class Promos {
     storyTag: string;
     swipeUpLink: string;
     specialWishes: string;
-    _id: string;
-  }>; 
+    _id: mongoose.Types.ObjectId;
+  }>;
 
   @Prop()
   campaignName: string; 

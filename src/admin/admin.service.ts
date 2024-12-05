@@ -264,8 +264,8 @@ export class AdminService {
 
             instagrams.forEach(insta => {
                 insta.latestInvoice = invoiceMap[insta.influencerId] || "No Invoice";
-                insta.campaignsCompleted = promoMap[insta.instagram.instagramUsername]?.campaignsCompleted || 0;
-                insta.campaignsDenied = promoMap[insta.instagram.instagramUsername]?.campaignsDenied || 0;
+                insta.campaignsCompleted = promoMap[insta.instagram.instagramUsername]?.campaignsCompleted;
+                insta.campaignsDenied = promoMap[insta.instagram.instagramUsername]?.campaignsDenied;
             });
 
             return {
@@ -738,12 +738,16 @@ export class AdminService {
                                 const followersCount = insta.followersNumber.replace(/[\s,]/g, '');
                                 totalFollowers += parseInt(followersCount, 10);
 
-                                const cleanedPrice = insta.price.replace(/[^\d]/g, '');
-                                const cleanedPublicPrice = insta.publicPrice.replace(/[^\d]/g, '');
+                                // const cleanedPrice = insta.price.replace(/[^\d]/g, '');
+                                // const cleanedPublicPrice = insta.publicPrice.replace(/[^\d]/g, '');
 
+                                // Object.assign(promoInfluencer, {
+                                //     price: parseInt(cleanedPrice, 10),
+                                //     publicPrice: parseInt(cleanedPublicPrice, 10),
+                                // });
                                 Object.assign(promoInfluencer, {
-                                    price: parseInt(cleanedPrice, 10),
-                                    publicPrice: parseInt(cleanedPublicPrice, 10),
+                                    price: 0,
+                                    publicPrice: 0,
                                 });
                             }
                         }
@@ -1051,7 +1055,7 @@ export class AdminService {
                 };
             }
 
-            const video = promo.videos.find((video) => video._id === data.videoId);
+            const video = promo.videos.find((video) => video._id.toString() === data.videoId);
 
             if (data.newVideoLink) {
                 const influencer = promo.selectInfluencers.find((influencer) => influencer.instagramUsername === data.selectedInstagramUsername);
@@ -1236,7 +1240,7 @@ export class AdminService {
 
             if (!promo.videos.some(video => video.videoLink === data.selectedVideo)) {
                 const newVideo = {
-                    _id: new Types.ObjectId().toString(),
+                    _id: new Types.ObjectId(),
                     videoLink: data.selectedVideo,
                     postDescription: '',
                     storyTag: '',

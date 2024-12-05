@@ -44,7 +44,7 @@ export class PromosService {
                     dateRequest,
                 };
             });
-
+            
             const result = await this.promosModel.create({
                 ...data,
                 selectInfluencers: processedInfluencers,
@@ -52,7 +52,6 @@ export class PromosService {
                 paymentStatus: "wait",
                 statusPromo: "wait",
                 verifyPromo: "wait",
-                
             });
 
             const dataClient = await this.clientModel.findOne({ _id: data.userId });
@@ -132,6 +131,15 @@ ${data.videos.map((video, index) => `
                     paymentStatus: "wait",
                     statusPromo: "estimate",
                     isPO: false,
+                    videos: data.videos.map((video) => {
+                        return {
+                            videoLink: video.videoLink,
+                            postDescription: video.postDescription,
+                            storyTag: video.storyTag,
+                            swipeUpLink: video.swipeUpLink,
+                            specialWishes: video.specialWishes,
+                        };
+                    })
                 });
 
                 const dataClient = await this.clientModel.findOne({_id: data.userId});
@@ -185,6 +193,15 @@ ${data.videos.map((video, index) => `
                     paymentStatus: "wait",
                     statusPromo: "estimate",
                     isPO: true,
+                    videos: data.videos.map((video) => {
+                        return {
+                            videoLink: video.videoLink,
+                            postDescription: video.postDescription,
+                            storyTag: video.storyTag,
+                            swipeUpLink: video.swipeUpLink,
+                            specialWishes: video.specialWishes,
+                        };
+                    })
                 });
 
                 const dataClient = await this.clientModel.findOne({_id: data.userId});
