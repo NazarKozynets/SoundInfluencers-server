@@ -7,7 +7,8 @@ import {CreateInvoiceDtoDto} from "./dto/create-invoice.dto";
 import {Invoices} from "./schemas/invoices.schema";
 import {SaveInvoiceData} from "./schemas/invoice-save.schema";
 import sendMail from "src/utils/sendMail";
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {Injectable, HttpException, HttpStatus} from '@nestjs/common';
+
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
 import {Response} from 'express';
@@ -60,10 +61,32 @@ export class InvoiceService {
         function getFormattedDate() {
             const date = new Date();
             const day = date.getDate();
-            const month = date.getMonth() + 1; // Months are zero-indexed
+            const month = date.getMonth() + 1;
             const year = date.getFullYear();
 
             return `${month}/${day}/${year}`;
+        }
+
+        function getPaymentMethod() {
+            if (result.selectedPaymentMethod === "Paypal") {
+                return `Paypal Email: ${result.paypalEmail}`;
+            } else if (result.selectedPaymentMethod.toLowerCase() === "uk bank transfer") {
+                return `Bank Name: ${result.bankName}
+                Beneficiary: ${result.beneficiary}
+                Beneficiary Address: ${result.beneficiaryAddress}
+                Sort Code: ${result.sortCode}
+                Account Number: ${result.accountNumber}
+              `;
+            } else if (result.selectedPaymentMethod.toLowerCase() === "international bank transfer") {
+                return `Bank Name: ${result.bankName}
+                Beneficiary: ${result.beneficiary}
+                Beneficiary Address: ${result.beneficiaryAddress}
+                IBAN: ${result.iban}
+                Bank Country: ${result.bankCountry}
+                Bank Account Currency: ${result.bankAccountCurrency}
+                SWIFT/BIC: ${result.swiftOrBic}
+                `;
+            }
         }
 
         const pdfFileName = "invoice.pdf";
@@ -108,6 +131,9 @@ export class InvoiceService {
         doc.text(result.amount + "€", 250, 400);
         doc.text("BALANCE DUE:", 50, 415);
         doc.text(result.amount + "€", 250, 415);
+
+        doc.text("Selected Payment Method: " + result.selectedPaymentMethod, 50, 430);
+        doc.text(getPaymentMethod(), 50, 445);
 
         // Payment method and terms
         doc.text("Payment Terms: Within 7 business days", 50, 435);
@@ -191,39 +217,33 @@ export class InvoiceService {
                 )
                 .join(", ");
 
-            await this.createPDF(result, data)
-                .then(async (pdfPath) => {
-                    await sendMail(
-                        "admin@soundinfluencers.com",
-                        // "nazarkozynets030606@zohomail.eu",
-                        `${checkUser.email}`,
-                        `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramLinks} Selected Payment Method: ${data.selectedPaymentMethod}`,
-                        "pdf",
-                        pdfPath as string
-                    );
+                await this.createPDF(result, data)
+                    .then(async (pdfPath) => {
+                        await sendMail(
+                            "admin@soundinfluencers.com",
+                            // "nazarkozynets030606@zohomail.eu",
+                            `${checkUser.email}`,
+                            `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramLinks} Selected Payment Method: ${data.selectedPaymentMethod}`,
+                            "pdf",
+                            pdfPath as string
+                        );
 
-                    await sendMail(
-                        checkUser.email,
-                        "soundinfluencers",
-                        `<p>Hello</p>
-        <p>We acknowledge the receipt of your invoice. If everything is in order, we will process the payment to your details within the next 7 days.
-        </p></br></br>
-        <p>Bests</br>
-        Sound Influencers Team
-        </p>
-        `,
-                        "html"
-                    );
-                })
-                .catch((error) => {
-                    console.error("Error creating PDF:", error);
-                });
-            // await sendMail(
-            //   "dorato6145@evvgo.com",
-            //   "soundinfluencers",
-            //   `<p>Invoice from ${checkUser.firstName}</p> \n ${resultString}`,
-            //   "pdf"
-            // );
+                        await sendMail(
+                            checkUser.email,
+                            "soundinfluencers",
+                            `<p>Hello</p>
+            <p>We acknowledge the receipt of your invoice. If everything is in order, we will process the payment to your details within the next 7 days.
+            </p></br></br>
+            <p>Bests</br>
+            Sound Influencers Team
+            </p>
+            `,
+                            "html"
+                        );
+                    })
+                    .catch((error) => {
+                        console.error("Error creating PDF:", error);
+                    });
             return {
                 code: 201,
                 result,

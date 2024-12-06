@@ -258,8 +258,8 @@ export class AuthService {
             };
 
             await sendMail(
-                // 'nazarkozynets030606@gmail.com',
-                'admin@soundinfluencers.com',
+                'nazarkozynets030606@gmail.com',
+                // 'admin@soundinfluencers.com',
                 'soundinfluencers',
                 `<p>Request from a new partner ${data.firstName}</p>
             <b>Details:</b><br/><p>First Name: ${data.firstName}</p>
