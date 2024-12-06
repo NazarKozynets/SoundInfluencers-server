@@ -60,10 +60,20 @@ export class InvoiceService {
         function getFormattedDate() {
             const date = new Date();
             const day = date.getDate();
-            const month = date.getMonth() + 1; // Months are zero-indexed
+            const month = date.getMonth() + 1;
             const year = date.getFullYear();
-
             return `${month}/${day}/${year}`;
+        }
+
+        function getPaymentMethod(): string {
+            if (result.selectedPaymentMethod === "Paypal") {
+                return `Paypal Email: ${result.paypalEmail}`;
+            } else if (result.selectedPaymentMethod.toLowerCase() === "uk bank transfer") {
+                return `Bank Name: ${result.bankName}\nBeneficiary: ${result.beneficiary}\nBeneficiary Address: ${result.beneficiaryAddress}\nSort Code: ${result.sortCode}\nAccount Number: ${result.accountNumber}`;
+            } else if (result.selectedPaymentMethod.toLowerCase() === "international bank transfer") {
+                return `Bank Name: ${result.bankName}\nBeneficiary: ${result.beneficiary}\nBeneficiary Address: ${result.beneficiaryAddress}\nIBAN: ${result.iban}\nBank Country: ${result.bankCountry}\nBank Account Currency: ${result.bankAccountCurrency}\nSWIFT/BIC: ${result.swiftOrBic}`;
+            }
+            return "";
         }
 
         const pdfFileName = "invoice.pdf";
@@ -78,7 +88,6 @@ export class InvoiceService {
         doc.fontSize(10).text(result.beneficiary, 50, 100);
         doc.text(result.street, 50, 115);
         doc.text(result.city + " " + result.country, 50, 130);
-        // doc.text('TAX ID: 113503610', 50, 145);
 
         // Date and Invoice Number
         doc.text(`DATE: ${getFormattedDate()}`, 400, 100);
@@ -95,22 +104,29 @@ export class InvoiceService {
 
         // Table headers
         doc.text("DESCRIPTION", 50, 330);
-        // doc.text('QTY', 200, 300);
         doc.text("TOTAL", 250, 330);
 
         // Table content
         doc.text(result.beneficiary + " campaign", 50, 350);
-        // doc.text('1', 200, 315);
         doc.text(result.amount + "€", 250, 350);
 
         // Payment details
-        doc.text("SUBTOTAL:", 50, 400);
-        doc.text(result.amount + "€", 250, 400);
-        doc.text("BALANCE DUE:", 50, 415);
-        doc.text(result.amount + "€", 250, 415);
+        let currentY = 400;
+        doc.text("SUBTOTAL:", 50, currentY);
+        doc.text(result.amount + "€", 250, currentY);
 
-        // Payment method and terms
-        doc.text("Payment Terms: Within 7 business days", 50, 435);
+        currentY += 15;
+        doc.text("BALANCE DUE:", 50, currentY);
+        doc.text(result.amount + "€", 250, currentY);
+
+        currentY += 15;
+        doc.text("Selected Payment Method: " + result.selectedPaymentMethod, 50, currentY);
+
+        currentY += 15;
+        doc.text(getPaymentMethod(), 50, currentY, { width: 500, continued: false });
+
+        currentY = doc.y + 20;
+        doc.text("Payment Terms: Within 7 business days", 50, currentY);
 
         doc.end();
 
@@ -185,19 +201,17 @@ export class InvoiceService {
                 await this.saveInvoiceDataModel.create(data);
             }
 
-            const instagramLinks = checkUser.instagram
-                .map(
-                    (ig) => `<a href="${ig.instagramLink}" target="_blank">${ig.instagramUsername}</a>`
-                )
-                .join(", ");
-
+            const instagramAccounts = checkUser.spotify.map((account) => {
+                return `${account.instagramUsername} `;
+            });
+            
             await this.createPDF(result, data)
                 .then(async (pdfPath) => {
                     await sendMail(
                         "admin@soundinfluencers.com",
                         // "nazarkozynets030606@zohomail.eu",
                         `${checkUser.email}`,
-                        `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramLinks} Selected Payment Method: ${data.selectedPaymentMethod}`,
+                        `Invoice from ${data.contactEmail} (${data.contactName}) ID: ${result?._id} Instagram Accounts: ${instagramAccounts} Selected Payment Method: ${data.selectedPaymentMethod}`,
                         "pdf",
                         pdfPath as string
                     );
@@ -218,12 +232,6 @@ export class InvoiceService {
                 .catch((error) => {
                     console.error("Error creating PDF:", error);
                 });
-            // await sendMail(
-            //   "dorato6145@evvgo.com",
-            //   "soundinfluencers",
-            //   `<p>Invoice from ${checkUser.firstName}</p> \n ${resultString}`,
-            //   "pdf"
-            // );
             return {
                 code: 201,
                 result,
