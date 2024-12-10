@@ -933,6 +933,7 @@ export class AdminService {
                         if (influencer.instagramUsername === instagramProfile.instagramUsername) {
                             return {
                                 ...influencer,
+                                closePromo: 'close',
                                 price: cleanedPrice,
                                 publicPrice: cleanedPublicPrice,
                                 followersCount: followersCount.replace(/[\s,]/g, ''),
