@@ -9,6 +9,7 @@ import {
   InfluencerSchema,
 } from 'src/auth/schemas/influencer.schema';
 import { Offers, OffersSchema } from './schemas/offers.schema';
+import {PromosCopies, PromosCopiesSchema} from "../admin/schemas/promos-copies.schema";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Offers, OffersSchema } from './schemas/offers.schema';
       { name: Client.name, schema: ClientSchema },
       { name: Influencer.name, schema: InfluencerSchema },
       { name: Offers.name, schema: OffersSchema },
+      { name: PromosCopies.name, schema: PromosCopiesSchema },
     ]),
   ],
   controllers: [PromosController],

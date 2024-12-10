@@ -161,6 +161,11 @@ export class AdminController {
         return this.adminService.adminGivePartialRefundToClient(userId, partialRefund, campaignId);
     }
     
+    @Post('promos/close-promo/:promoId')
+    adminClosePromo(@Param('promoId') promoId: string) {
+        return this.adminService.adminClosePromo(promoId);
+    }
+    
     @Get('offers/getAll')
     adminGetAllOffers() {
         return this.adminService.adminGetAllOffers();
