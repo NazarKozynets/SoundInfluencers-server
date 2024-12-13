@@ -15,6 +15,7 @@ interface typesInstagram {
     categories: string[] | null;
     isHidden: boolean;
     isDeleted: boolean;
+    isVerified: boolean;
 }
 
 const typesInstagramApi = {
@@ -36,6 +37,7 @@ const typesInstagramApi = {
     categories: [String] || null,
     isHidden: Boolean,
     isDeleted: Boolean,
+    isVerified: Boolean,
 };
 
 @Schema({

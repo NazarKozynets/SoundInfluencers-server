@@ -7,6 +7,7 @@ import {
   Influencer,
   InfluencerSchema,
 } from 'src/auth/schemas/influencer.schema';
+import {AppGateway} from "../websocket/app.gateway";
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import {
     ]),
   ],
   controllers: [ProfileController],
-  providers: [ProfileService],
+  providers: [ProfileService, AppGateway],
 })
 export class ProfileModule {}

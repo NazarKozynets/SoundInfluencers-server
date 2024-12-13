@@ -6,7 +6,7 @@ import {
     Patch,
     Put,
     Param,
-    Delete,
+    Delete, Query,
 } from '@nestjs/common';
 import {ProfileService} from './profile.service';
 import {UpdatePersonalClientDto} from './dto/update-personal-client.dto';
@@ -15,6 +15,7 @@ import {UpdatePersonalInfluencerDto} from './dto/update-personal-influencer.dto'
 import {UpdateSocialMediaAccountDto} from "./dto/update-social-media-account.dto";
 import {AddSocialMediasDto} from "./dto/add-social-medias.dto";
 import {SendMailPriceChangeDto} from "./dto/send-mail-price-change.dto";
+import {ApiQuery} from "@nestjs/swagger";
 
 @Controller('profile')
 export class ProfileController {
@@ -50,9 +51,25 @@ export class ProfileController {
     addSocialMediaAccounts(@Body() data: AddSocialMediasDto) {
         return this.profileService.addSocialMediaAccounts(data);
     }
-    
+
     @Post('influencer/send-mail-price-change')
     sendMailAboutChangingPrice(@Body() data: SendMailPriceChangeDto) {
         return this.profileService.sendMailAboutChangingPrice(data);
     }
+
+    @ApiQuery({ name: 'influencerId' })
+    @ApiQuery({ name: 'accounts' })
+    @ApiQuery({ name: 'isVerified' })
+    @Get('influencer/verify-new-brand')
+    verifyNewSocialMediaAccounts(
+        @Query() query: { influencerId: string; accounts: []; isVerified: boolean },
+    ) {
+        return this.profileService.verifyNewSocialMediaAccounts(
+            query.influencerId,
+            query.accounts,
+            query.isVerified,
+        );
+    }
+
+
 }

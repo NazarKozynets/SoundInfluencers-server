@@ -208,6 +208,7 @@ export class AuthService {
                         publicPrice: publicPrice,
                         isHidden: false,
                         isDeleted: false,
+                        isVerified: true,
                     };
                 });
             }
@@ -604,7 +605,7 @@ export class AuthService {
 
                 if (Array.isArray(socialMediaAccounts)) {
                     return socialMediaAccounts
-                        .filter((account) => account.isHidden !== true && account.isDeleted !== true)
+                        .filter((account) => account.isHidden !== true && account.isDeleted !== true && account.isVerified === true)
                         .map((account) => ({
                             ...account,
                             _id: item._id, 

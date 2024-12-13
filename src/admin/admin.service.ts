@@ -787,7 +787,7 @@ export class AdminService {
 
     async adminDeletePromo(promoId: string) {
         try {
-            const promo = await this.promosModel.findOne({_id: promoId});
+            let promo = await this.promosModel.findOne({_id: promoId}) || await this.promosCopiesModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -796,7 +796,7 @@ export class AdminService {
                 };
             }
             
-            await this.promosModel.deleteOne({_id: promoId});
+            await this.promosModel.deleteOne({_id: promoId}) || await this.promosCopiesModel.deleteOne({_id: promoId});
 
             return {
                 status: 200,
@@ -813,7 +813,7 @@ export class AdminService {
 
     async adminClosePromoForInfluencer(promoId: string, instagramUsername: string) {
         try {
-            const promo = await this.promosModel.findOne({_id: promoId});
+            let promo = await this.promosModel.findOne({_id: promoId}) || await this.promosCopiesModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -1082,7 +1082,7 @@ export class AdminService {
                 };
             }
 
-            const checkPromo = await this.promosModel.findOne({_id: data._id});
+            let checkPromo = await this.promosModel.findOne({_id: data._id}) || await this.promosCopiesModel.findOne({_id: data._id});
 
             if (!checkPromo) {
                 return {
@@ -1092,6 +1092,11 @@ export class AdminService {
             }
 
             await this.promosModel.findOneAndUpdate(
+                {_id: data._id},
+                {
+                    ...data
+                },
+            ) || await this.promosCopiesModel.findOneAndUpdate(
                 {_id: data._id},
                 {
                     ...data
@@ -1113,7 +1118,7 @@ export class AdminService {
 
     async adminGivePartialRefundToClient(userId: string, partialRefund: number, campaignId: string) {
         try {
-            const campaign = await this.promosModel.findOne({_id: campaignId});
+            let campaign = await this.promosModel.findOne({_id: campaignId}) || await this.promosCopiesModel.findOne({_id: campaignId});
 
             if (!campaign) {
                 return {
@@ -1154,7 +1159,7 @@ export class AdminService {
 
     async adminUpdatePromoVideo(data: AdminUpdatePromoVideoDto) {
         try {
-            const promo = await this.promosModel.findOne({_id: data._id});
+            let promo = await this.promosModel.findOne({_id: data._id}) || await this.promosCopiesModel.findOne({_id: data._id});
             if (!promo) {
                 return {
                     status: 404,
@@ -1204,7 +1209,7 @@ export class AdminService {
 
     async adminUpdateInfluencersListPromo(data: AdminUpdatePromoInfluencersDto) {
         try {
-            const promo = await this.promosModel.findOne({_id: data.promoId});
+            let promo = await this.promosModel.findOne({_id: data.promoId}) || await this.promosCopiesModel.findOne({_id: data.promoId});
 
             if (!promo) {
                 return {
@@ -1257,7 +1262,7 @@ export class AdminService {
 
     async adminRemoveInfluencerFromPromo(promoId: string, instagramUsername: string) {
         try {
-            const promo = await this.promosModel.findOne({_id: promoId});
+            let promo = await this.promosModel.findOne({_id: promoId}) || await this.promosCopiesModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -1300,7 +1305,7 @@ export class AdminService {
 
     async adminAddInfluencerToPromo(data: AdminAddInfluencerToCampaignDto) {
         try {
-            const promo = await this.promosModel.findOne({_id: data._id});
+            let promo = await this.promosModel.findOne({_id: data._id}) || await this.promosCopiesModel.findOne({_id: data._id});
             if (!promo) {
                 return {
                     status: 404,
@@ -1387,7 +1392,7 @@ export class AdminService {
 
     async adminAddInfluencerToTempList(promoId: string, instagramUsername: string) {
         try {
-            const promo = await this.promosModel.findOne({_id: promoId});
+            let promo = await this.promosModel.findOne({_id: promoId}) || await this.promosCopiesModel.findOne({_id: promoId});
 
             if (!promo) {
                 return {
@@ -1803,4 +1808,17 @@ Soundinfluencers Team
             };
         }
     };
+    
+    async adminAddFieldsToInfluencersBrands() {
+        const result = await this.influencerModel.updateMany(
+            { "instagram": { $exists: true, $ne: [] } }, 
+            { $set: { "instagram.$[elem].isVerified": true } }, 
+            {
+                arrayFilters: [ { "elem.isVerified": { $exists: false } } ], 
+                multi: true
+            }
+        );
+
+        console.log(`${result.modifiedCount} documents updated`);
+    }
 }

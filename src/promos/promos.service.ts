@@ -233,8 +233,8 @@ ${emailVideoContent()}
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi</p>
                 <p>The Client ${dataClient.firstName} has requested a campaign on this network without providing any content</p>
@@ -292,8 +292,8 @@ ${emailVideoContent()}
                 const influencerFilter = influencerList.filter((item) => item);
 
                 await sendMail(
-                    // "nazarkozynets030606@zohomail.eu",
-                    "admin@soundinfluencers.com",
+                    "nazarkozynets030606@zohomail.eu",
+                    // "admin@soundinfluencers.com",
                     "soundinfluencers",
                     `<p>Hi,</p>
 <p>The Client ${dataClient.firstName} has requested the following post for this list of influencers:</p>
@@ -1244,7 +1244,7 @@ ${influencerVideos.map((video, index) => `
                 const checkInfluencer =
                     await this.influencerModel.findById(influencerId);
 
-                const currentInstagram = checkInfluencer.instagram.find(
+                const currentInstagram = checkInfluencer[data.socialMedia].find(
                     (fin) => fin.instagramUsername === instagramUsername
                 );
 
@@ -1260,10 +1260,17 @@ ${influencerVideos.map((video, index) => `
             };
 
             const updateNewPromo = await (async () => {
-                if ((findNewPromo.socialMedia === 'spotify' || findNewPromo.socialMedia === 'soundcloud') && data.screenshot) {
+                if ((findNewPromo.socialMedia === 'spotify' || findNewPromo.socialMedia === 'soundcloud')) {
+                    if (data.screenshot === '' || data.screenshot === null) {
+                        console.log('screenshot is empty');
+                        return {
+                            code: 400,
+                            message: 'screenshot is empty',
+                        };
+                    }
                     if (dataInstagram.closePromo !== "close") await paymentGo();
 
-                    return await this.promosModel.findOneAndUpdate(
+                    await this.promosModel.findOneAndUpdate(
                         {
                             _id: promoId,
                             selectInfluencers: {
@@ -1283,7 +1290,11 @@ ${influencerVideos.map((video, index) => `
                             },
                         }
                     );
-                } else if (findNewPromo.socialMedia === "press" && data.postLink) {
+                } else if (findNewPromo.socialMedia === "press") {
+                    if (data.postLink === '' || data.postLink === null) return {
+                        code: 400,
+                        message: 'post link is empty',
+                    };
                     if (dataInstagram.closePromo !== 'close') await paymentGo();
 
                     return await this.promosModel.findOneAndUpdate(
@@ -1389,31 +1400,48 @@ ${influencerVideos.map((video, index) => `
             });
 
             if (checkPromo) {
-                await this.promosModel.findOneAndUpdate(
-                    {_id: promoId},
-                    {statusPromo: "finally"}
-                );
-
-                await Promise.all(
-                    findNewPromo.selectInfluencers.map(async (item) => {
-                        const checkInfluencer = await this.influencerModel.findById(
-                            item.influencerId
-                        );
-                        const currentInstagram = checkInfluencer.instagram.find(
-                            (fin) => fin.instagramUsername === item.instagramUsername
-                        );
-
-                        await this.influencerModel.findOneAndUpdate(
-                            {_id: item.influencerId},
-                            {
-                                balance: String(
-                                    Number(checkInfluencer.balance) +
-                                    (+currentInstagram.price.replace(/[^\d]/g, ""))
-                                ),
-                            }
-                        );
-                    })
-                );
+                await this.promosCopiesModel.create({
+                    ...findNewPromo,
+                    statusPromo: "finally",
+                    verifyPromo: "accept",
+                    isCopy: true,
+                    totalFollowers: findNewPromo.selectInfluencers.reduce((acc, item) => {
+                        return acc + parseInt(item.followersNumber);
+                    }, 0),
+                    selectInfluencers: findNewPromo.selectInfluencers.map((item) => {
+                        return {
+                            ...item,
+                            postLink: item.postLink || data.postLink,
+                            impressions: item.impressions || data.impressions,
+                            like: item.like || data.like,
+                            screenshot: item.screenshot || data.screenshot,
+                            confirmation: "accept",
+                            closePromo: "close",
+                        };
+                    }),
+                });
+                await this.promosModel.deleteOne({_id: promoId});
+                
+                // await Promise.all(
+                //     findNewPromo.selectInfluencers.map(async (item) => {
+                //         const checkInfluencer = await this.influencerModel.findById(
+                //             item.influencerId
+                //         );
+                //         const currentInstagram = checkInfluencer[data.socialMedia].find(
+                //             (fin) => fin.instagramUsername === item.instagramUsername
+                //         );
+                //
+                //         await this.influencerModel.findOneAndUpdate(
+                //             {_id: item.influencerId},
+                //             {
+                //                 balance: String(
+                //                     Number(checkInfluencer.balance) +
+                //                     (+currentInstagram.price.replace(/[^\d]/g, ""))
+                //                 ),
+                //             }
+                //         );
+                //     })
+                // );
             }
 
             return {

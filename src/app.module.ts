@@ -13,6 +13,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PaymentModule } from './payment/payment.module';
 import {AdminModule} from "./admin/admin.module";
+import {AppGateway} from "./websocket/app.gateway";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import {AdminModule} from "./admin/admin.module";
     Client,
     PromosModule,
     FileModule,
+      
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
@@ -36,6 +38,6 @@ import {AdminModule} from "./admin/admin.module";
     AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppGateway],
 })
 export class AppModule {}
